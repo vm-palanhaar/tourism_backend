@@ -18,10 +18,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     #PACKAGES
     'rest_framework',
+    'knox',
     #APPS
     'indianrailwaysapp',
     'userapp',
 ]
+
+AUTH_USER_MODEL = 'userapp.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -50,6 +53,23 @@ TEMPLATES = [
         },
     },
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': 
+    ['knox.auth.TokenAuthentication',],
+
+     'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+
+    'DEFAULT_THROTTLE_RATES': {
+        'anon' : '51/day',
+        'user' : '100/day'
+    }
+}
+
+REST_KNOX = {'TOKEN_TTL': None}
 
 WSGI_APPLICATION = 'tourism_backend.wsgi.application'
 

@@ -6,6 +6,7 @@ from indianrailwaysapp import models
 Common APIs Serializer
 1. RailwayStationListSerializer
 2. RailwayStationSerializer
+
 Yatrigan APIs Serializer
 
 iDukaan APIs Serializer
