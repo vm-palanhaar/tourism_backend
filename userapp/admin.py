@@ -1,3 +1,30 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 
-# Register your models here.
+from .models import User
+
+
+class UserAdminConfig(UserAdmin):
+    search_fields = ('email', 'username', 'first_name')
+    list_filter = ['is_iDukaan','is_Yatrigan']
+    list_display = ('email','username','first_name','last_name','contact_number')
+
+    fieldsets = (
+        ('User Profile', {'fields': ('email','first_name','last_name','contact_number')}),
+        ('Credentials', {'fields':('username','password')}),
+        ('App Access',{'fields':('is_iDukaan', 'is_Yatrigan')}),
+        ('User Type',{'fields':('is_active', 'is_staff','is_superuser')}),
+    )
+
+    add_fieldsets = (
+        ('User Profile',{'classes':('wide',),
+        'fields':('email','first_name','last_name','last_name','contact_number',)}),
+        ('Credentials',{'classes':('wide',),
+        'fields':('username','password','password2',)}),
+        ('App Access',{'classes':('wide',),
+        'fields':('is_iDukaan', 'is_Yatrigan')}),
+        ('User Type',{'classes':('wide',),
+        'fields':('is_active', 'is_staff','is_superuser')}),
+    )
+
+admin.site.register(User, UserAdminConfig)
