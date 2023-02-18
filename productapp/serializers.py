@@ -48,10 +48,10 @@ class BrandListSerializer(serializers.ModelSerializer):
         exclude = ['created_at','updated_at','is_show',]
 
     def get_active_product(self, instance):
-        return models.Product.objects.filter(brand=instance, active=True).count()
+        return models.Product.objects.filter(brand=instance, is_active=True).count()
 
     def get_in_active_product(self, instance):
-        return models.Product.objects.filter(brand=instance, active=False).count()
+        return models.Product.objects.filter(brand=instance, is_active=False).count()
 
 
 #ProductCategoryListApi - idukaan
