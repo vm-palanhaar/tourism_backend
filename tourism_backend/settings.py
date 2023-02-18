@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     #APPS
     'indianrailwaysapp',
     'userapp',
+    'productapp',
 ]
 
 AUTH_USER_MODEL = 'userapp.User'
