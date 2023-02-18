@@ -44,7 +44,7 @@ class AddBrandAPIView(generics.CreateAPIView, PermissionRequiredMixin):
 
     def post(self, request, *args, **kwargs):
         if request.data['confirm'] == 'false':
-            brands = PCModel.Brand.objects.filter(name__icontains=request.data['name'], show=True)
+            brands = PCModel.Brand.objects.filter(name__icontains=request.data['name'], is_show=True)
             if brands.count() != 0 :
                 serializer = PCSerializer.BrandListSerializer(brands, many=True)
                 response_map['data'] = serializer.data
@@ -61,7 +61,7 @@ class BrandListSearchAPIView(generics.ListAPIView, PermissionRequiredMixin):
 
         if brands.count() == 0:
             failed_response_map['error'] = brands_search_not_found
-            return Response(response_map, status=status.HTTP_200_OK)
+            return Response(failed_response_map, status=status.HTTP_200_OK)
 
         serializer = self.get_serializer(brands, many=True)
         response_map['data'] = serializer.data
@@ -86,7 +86,7 @@ class BrandListAPIView(generics.ListAPIView, PermissionRequiredMixin):
         
         if brands.count() == 0:
             failed_response_map['error'] = is_failure
-            return Response(response_map, status=status.HTTP_200_OK)
+            return Response(failed_response_map, status=status.HTTP_200_OK)
 
         serializer = self.get_serializer(brands, many=True)
         response_map['data'] = serializer.data
@@ -120,7 +120,7 @@ class AddProductAPIView(generics.CreateAPIView, PermissionRequiredMixin):
             if products.count() != 0 :
                 serializer = PCSerializer.ProductListSerializer(products, many=True)
                 response_map['data'] = serializer.data
-                return Response(serializer, status=status.HTTP_200_OK)
+                return Response(response_map, status=status.HTTP_200_OK)
                 
         return super().post(request, *args, **kwargs)
 
@@ -145,7 +145,7 @@ class ProductListAPIView(generics.ListAPIView, PermissionRequiredMixin):
 
         if products.count() == 0:
                 failed_response_map['error'] = is_failure
-                return Response(response_map, status=status.HTTP_200_OK)
+                return Response(failed_response_map, status=status.HTTP_200_OK)
 
         serializer = self.get_serializer(products, many=True)
         response_map['data'] = serializer.data
