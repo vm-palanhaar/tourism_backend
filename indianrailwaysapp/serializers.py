@@ -13,14 +13,12 @@ iDukaan APIs Serializer
 
 '''
 
-#RailwayStationList - Common
 class RailwayStationListSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.RailwayStation
         fields = ['code','name']
 
 
-#RailwayStation - Common
 class RailwayStationSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.RailwayStation

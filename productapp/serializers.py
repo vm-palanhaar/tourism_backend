@@ -16,7 +16,6 @@ iDukaan APIs Serializer
 '''
 
 
-#ProductDetailsApi - common
 class ProductSerializer(serializers.ModelSerializer):
     id = serializers.CharField()
     brand = serializers.CharField()
@@ -30,7 +29,6 @@ class ProductSerializer(serializers.ModelSerializer):
         return images
 
 
-#AddBrandApi - idukaan
 class AddBrandSerializer(serializers.ModelSerializer):
     confirm = serializers.BooleanField(required=False, read_only=True)
     class Meta:
@@ -38,7 +36,6 @@ class AddBrandSerializer(serializers.ModelSerializer):
         fields = ('name','image','confirm')
 
 
-#BrandListApi - idukaan
 class BrandListSerializer(serializers.ModelSerializer):
     id = serializers.CharField()
     active_product = serializers.SerializerMethodField()
@@ -54,15 +51,12 @@ class BrandListSerializer(serializers.ModelSerializer):
         return models.Product.objects.filter(brand=instance, is_active=False).count()
 
 
-#ProductCategoryListApi - idukaan
 class ProductCategoryListSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.ProductCategory
         exclude = ('created_at','updated_at',)
 
 
-#AddProductSerializer - idukaan
-#ProductDetailsApi - commonssss
 class ProductImageSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, read_only=True)
     class Meta:
@@ -70,7 +64,6 @@ class ProductImageSerializer(serializers.ModelSerializer):
         fields = ('id','image',)
 
 
-#AddProductApi - idukaan
 class AddProductSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False, read_only=True)
     confirm = serializers.BooleanField(required=False, read_only=True)
@@ -91,7 +84,6 @@ class AddProductSerializer(serializers.ModelSerializer):
         return product
     
 
-#ProductListAPI - idukaan
 class ProductListSerializer(serializers.ModelSerializer):
     id = serializers.CharField()
     brand = serializers.SerializerMethodField()
