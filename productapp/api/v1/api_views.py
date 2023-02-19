@@ -20,10 +20,11 @@ class ProductAPIView(generics.RetrieveAPIView):
 
     def get(self, request, *args, **kwargs):
         try:
-            product = PCModel.Product.objects.get(id=request.headers['id'])
+            product = PCModel.Product.objects.get(id=kwargs['productid'])
         except PCModel.Product.DoesNotExist:
             failed_response_map['error'] = product_not_found
             return Response(failed_response_map, status=status.HTTP_404_NOT_FOUND)
         
         serializer = PCSerializer.ProductSerializer(product)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        response_map['data'] = serializer.data
+        return Response(response_map, status=status.HTTP_200_OK)
