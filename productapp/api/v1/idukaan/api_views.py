@@ -104,7 +104,7 @@ class AddProductAPIView(generics.CreateAPIView, PermissionRequiredMixin):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        if kwargs['brandid'] != request.datat['brand']:
+        if kwargs['brandid'] != request.data['brand']:
             failed_response_map['error'] = is_error
             return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
         
@@ -163,7 +163,7 @@ class ProductAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
             return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
     
         if product.brand.is_show == True:
-            failed_response_map['error'] = product_delete_not_applicable
+            failed_response_map['error'] = product_update_not_applicable
             return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
     
         serializer = PCSerializer.PatchProductSerializer(product, data=request.data, partial=True)

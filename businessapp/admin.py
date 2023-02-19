@@ -8,10 +8,10 @@ class OrganizationTypeConfig(admin.ModelAdmin):
     list_display = ['entity','document','verified','pending']
 
     def verified(self, instance):
-        return models.Organization.objects.filter(entity=instance, active=True).count()
+        return models.Organization.objects.filter(entity=instance, is_active=True).count()
     
     def pending(self, instance):
-        return models.Organization.objects.filter(entity=instance, active=False).count()
+        return models.Organization.objects.filter(entity=instance, is_active=False).count()
 
 
 class OrganizationEmployeeAdmin(admin.TabularInline):

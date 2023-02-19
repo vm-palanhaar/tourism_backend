@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from businessapp import models as BusinessModel
+from businessapp import models as OrgModel
 from userapp import models as UserModel
 
 
@@ -17,37 +17,33 @@ iDukaan APIs Serializer
 
 class OrganizationTypeListSerializer(serializers.ModelSerializer):
     class Meta:
-        model = BusinessModel.OrganizationType
+        model = OrgModel.OrganizationType
         fields = '__all__'
 
 
 class AddOrganizationSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, read_only=True)
     class Meta:
-        model = BusinessModel.Organization
-        exclude = ['active']
+        model = OrgModel.Organization
+        exclude = ['is_active']
 
     def create(self, validated_data):
-        try:
-            org = BusinessModel.Organization.objects.get(registration=validated_data['registration'])
-            return org
-        except BusinessModel.Organization.DoesNotExist:
-            org = super().create(validated_data)
-            user = self.context.get('view').request.user
-            employee = BusinessModel.OrganizationEmployee.objects.create(
-                organization = org,
-                user = user,
-                manager = True
-            )
-            employee.save
-            return org
+        org = super().create(validated_data)
+        user = self.context.get('view').request.user
+        employee = OrgModel.OrganizationEmployee.objects.create(
+            organization = org,
+            user = user,
+            manager = True
+        )
+        employee.save
+        return org
 
 
 class OrganizationListSerializer(serializers.ModelSerializer):
     id = serializers.CharField()
     entity = serializers.CharField()
     class Meta:
-        model = BusinessModel.Organization
+        model = OrgModel.Organization
         exclude = ['registration','document','created_at','updated_at']
 
 
@@ -56,24 +52,24 @@ class OrganizationSerializer(serializers.ModelSerializer):
     entity = serializers.CharField()
     employees = serializers.SerializerMethodField()
     class Meta:
-        model = BusinessModel.Organization
+        model = OrgModel.Organization
         fields = ['id','entity','name','employees']
     
     def get_employees(self, instance):
-        return BusinessModel.OrganizationEmployee.objects.filter(organization=instance).count()
+        return OrgModel.OrganizationEmployee.objects.filter(organization=instance).count()
     
 
 class AddOrganizationEmployeeSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, read_only=True)
     class Meta:
-        model = BusinessModel.OrganizationEmployee
+        model = OrgModel.OrganizationEmployee
         fields = '__all__'
 
 
 class UpdateOrganizationEmployeeSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, read_only=True)
     class Meta:
-        model = BusinessModel.OrganizationEmployee
+        model = OrgModel.OrganizationEmployee
         fields = ['id','manager']
 
 
@@ -82,7 +78,7 @@ class OrganizationEmployeeListSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
     organization = serializers.SerializerMethodField()
     class Meta:
-        model = BusinessModel.OrganizationEmployee
+        model = OrgModel.OrganizationEmployee
         exclude = ['user']
 
     def get_name(self, instance):

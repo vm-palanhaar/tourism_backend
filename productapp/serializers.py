@@ -19,6 +19,7 @@ iDukaan APIs Serializer
 class ProductSerializer(serializers.ModelSerializer):
     id = serializers.CharField()
     brand = serializers.CharField()
+    category = serializers.CharField()
     images = serializers.SerializerMethodField()
     class Meta:
         model = models.Product
@@ -54,7 +55,7 @@ class BrandListSerializer(serializers.ModelSerializer):
 class ProductCategoryListSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.ProductCategory
-        exclude = ('created_at','updated_at',)
+        fields = '__all__'
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
@@ -86,6 +87,7 @@ class AddProductSerializer(serializers.ModelSerializer):
 
 class ProductListSerializer(serializers.ModelSerializer):
     id = serializers.CharField()
+    category = serializers.CharField()
     brand = serializers.SerializerMethodField()
     class Meta:
         model = models.Product
