@@ -1,5 +1,9 @@
 from django.db import models
 
+from businessapp import models as OrgModel
+from userapp import models as UserModel
+from productapp import models as PcModel
+
 class RailwayZone(models.Model):
     code = models.CharField(max_length=5, primary_key=True, verbose_name='Zone Code')
     name = models.CharField(max_length=60, verbose_name='Zone')
@@ -26,3 +30,113 @@ class RailwayStation(models.Model):
     name = models.CharField(max_length=30,  verbose_name='Railway Station')
     def __str__(self):
         return self.name
+    
+
+class TimestampModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    class Meta:
+        abstract = True
+    
+
+class IndianRailwaysShopType(models.Model):
+    name = models.CharField(max_length=60, verbose_name='Name')
+    description = models.TextField(blank=True, null=True, verbose_name='Description')
+    def __str__(self):
+        return self.name
+    
+
+class IndianRailwaysShopBusinessType(models.Model):
+    name = models.CharField(max_length=60, verbose_name='Name')
+    description = models.TextField(blank=True, null=True, verbose_name='Description')
+    shop_type = models.ManyToManyField(IndianRailwaysShopType, related_name='shoptype')
+    def __str__(self):
+        return self.name
+    
+
+def upload_to_shop_image_primary(instance,filename):
+    shopname = instance.name
+    return f'business/shops/{shopname}/{filename}'
+
+class IndianRailwaysShop(TimestampModel):
+    name = models.CharField(max_length=60, verbose_name='Shop Name')
+    image = models.ImageField(_('Image'), upload_to=upload_to_shop_image_primary)
+    contact_number = models.CharField(max_length=15, verbose_name='Contact Number')
+    business_type = models.ForeignKey(IndianRailwaysShopBusinessType, on_delete=models.CASCADE, verbose_name='Shop Business Type')
+    shop_type = models.ForeignKey(IndianRailwaysShopType, on_delete=models.CASCADE, verbose_name='Shop Type')
+    #Indian Railways
+    station = models.ForeignKey(RailwayStation, on_delete=models.CASCADE, verbose_name='Railway Station')
+    lat = models.CharField(max_length=60, verbose_name='Latitdue')
+    lon = models.CharField(max_length=60, verbose_name='Longitude')
+    platform_a = models.CharField(max_length=15, blank=True, null=True, verbose_name='Primary Platform')
+    platform_b = models.CharField(max_length=15, blank=True, null=True, verbose_name='Secondary Platform')
+    is_open = models.BooleanField(default=False, verbose_name='Open')
+    is_active = models.BooleanField(default=False, verbose_name='Verified')
+    #Payment Methods
+    is_cash = models.BooleanField(default=False, verbose_name='Cash')
+    is_card = models.BooleanField(default=False, verbose_name='Card')
+    is_upi = models.BooleanField(default=False, verbose_name='UPI')
+    def __str__(self):
+        return self.name
+    
+
+def upload_to_shop_license(instance,filename):
+    shopname = instance.shop.name
+    return f'business/shops/{shopname}/license/{filename}'
+    
+class IndianRailwaysShopLicense(TimestampModel):
+    shop = models.ForeignKey(IndianRailwaysShop, on_delete=models.CASCADE, verbose_name='Shop Name')
+    registration = models.CharField(max_length=30, verbose_name='License Number')
+    certificate = models.FileField(_('Document'), upload_to=upload_to_shop_license, blank=True, null=True)
+    start_date = models.DateField(blank=True, null=True, verbose_name='Start Date')
+    end_date = models.DateField(blank=True, null=True, verbose_name='End Date')
+    is_current = models.BooleanField(default=True, verbose_name='Current')
+    def __str__(self):
+        return self.shop.name
+
+
+def upload_to_shop_fssai(instance,filename):
+    shopname = instance.shop.name
+    return f'business/shops/{shopname}/fssai/{filename}'
+
+class IndianRailwaysShopFssaiLicense(TimestampModel):
+    shop = models.ForeignKey(IndianRailwaysShop, on_delete=models.CASCADE, verbose_name='Shop Name')
+    registration = models.CharField(max_length=30, verbose_name='FSSAI License Number')
+    certificate = models.FileField(_('Document'), upload_to=upload_to_shop_fssai, blank=True, null=True)
+    start_date = models.DateField(blank=True, verbose_name='Start Date')
+    end_date = models.DateField(blank=True, verbose_name='End Date')
+    is_current = models.BooleanField(default=True, verbose_name='Current')
+    def __str__(self):
+        return self.shop.name
+    
+
+def upload_to_shop_gst(instance,filename):
+    shopname = instance.shop.name
+    return f'business/shops/{shopname}/gst/{filename}'
+
+class IndianRailwaysShopGst(TimestampModel):
+    shop = models.ForeignKey(IndianRailwaysShop, on_delete=models.CASCADE, verbose_name='Shop Name')
+    registration = models.CharField(max_length=30, verbose_name='GST Number')
+    certificate = models.FileField(_('Document'), upload_to=upload_to_shop_gst, blank=True, null=True)
+    is_current = models.BooleanField(default=True, verbose_name='Current')
+    def __str__(self):
+        return self.shop.name
+
+
+class OrganizationIndianRailwaysShop(TimestampModel):
+    organization = models.ForeignKey(OrgModel.Organization, on_delete=models.CASCADE, verbose_name='Organization')
+    shop = models.ForeignKey(IndianRailwaysShop, on_delete=models.CASCADE, verbose_name='Shop')
+
+
+class OrganizationIndianRailwaysShopEmployee(TimestampModel):
+    organization = models.ForeignKey(OrgModel.Organization, on_delete=models.CASCADE, verbose_name='Organization')
+    shop = models.ForeignKey(IndianRailwaysShop, on_delete=models.CASCADE, verbose_name='Shop')
+    user = models.ForeignKey(UserModel.User, on_delete=models.CASCADE, verbose_name='User')
+    is_manager = models.BooleanField(default=False, verbose_name='Manager')
+    is_sales = models.BooleanField(default=False, verbose_name='Sales')
+
+
+class IndianRailwaysShopInventory(TimestampModel):
+    shop = models.ForeignKey(IndianRailwaysShop, on_delete=models.CASCADE, verbose_name='Shop')
+    product = models.ForeignKey(PcModel.Product, on_delete=models.CASCADE, verbose_name='Product')
+    is_stock = models.BooleanField(default=True, verbose_name='Stock')
