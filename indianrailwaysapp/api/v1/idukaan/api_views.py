@@ -20,13 +20,21 @@ response_map = {'data':None}
 is_error = 'Something went wrong. Issue reported to Team and your account will be de-activated.'
 
 organization_employee_failed_manager = 'You are not authorized to update organization!'
-organization_shop_employee_failed_manager = 'You are not authorized to update shop!'
+organization_shop_employee_failed_manager = 'You are not authorized to update shop or access confidential documents!'
 organization_shop_employee_failed = 'You are not assocatied to shops!'
 organization_shop_employee_add_failed = 'User is not associated with organization!'
 organization_shop_employee_add_already_exists_failed = 'User is already associated with shop!'
 organization_shop_employee_not_found = 'User is not associated with shop!'
 shop_license_already_exist = 'Shop license already exists!'
+shop_license_not_found = 'Shop license not available!'
+shop_fssai_license_not_found = 'Shop FSSAI license not available!'
 shops_list_not_found = 'You are not associated to shops!'
+shop_inv_product_listed_stock_page = 'Product is listed under stock page!'
+shop_inv_product_listed_out_stock_page = 'Product is listed under out-stock page!'
+product_not_found = 'Product is not available!'
+shop_inv_list_stock_empty = 'Products are not yet added to shop or out of stock!'
+shop_inv_list_out_stock_empty = 'Products are not yet added to shop or in stock!'
+shop_inv_not_found = 'Product is already discarded from shop!'
 bad_action = 'Bad action!'
 
 emp_manager = 1
@@ -218,12 +226,7 @@ class OrgShopEmpListAPIView(generics.ListAPIView, PermissionRequiredMixin):
     def get(self, request, *args, **kwargs):
         check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])
         if check == emp_manager or check == emp_non_manager:
-            try:
-                org_shop_emps = ShopModel.OrganizationShopEmployee.objects.filter(organization=kwargs['orgid'], shop=kwargs['shopid'])
-            except ShopModel.OrganizationShopEmployee.DoesNotExist:
-                failed_response_map['error'] = organization_shop_employee_update_failed
-                return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
-            
+            org_shop_emps = ShopModel.OrganizationShopEmployee.objects.filter(organization=kwargs['orgid'], shop=kwargs['shopid'])            
             serializer = ShopSerializer.OrgShopEmpListSerializer_iDukaan(org_shop_emps, many=True)
             response_map['data'] = serializer.data
             return Response(response_map, status=status.HTTP_200_OK)
@@ -266,6 +269,184 @@ class OrgShopEmpPatchDeleteAPIViewset(viewsets.ViewSet, PermissionRequiredMixin)
             except ShopModel.OrganizationShopEmployee.DoesNotExist:
                 return error_response(organization_shop_employee_not_found)            
 
+        elif check == emp_non_manager:
+            return error_response(organization_shop_employee_failed_manager)
+
+        return error_response(is_error)
+    
+
+class ShopLicenseAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])
+        if check == emp_manager:
+            serializer = ShopSerializer.AddShopLicenseSerializer_iDukaan(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        elif check == emp_non_manager:
+            return error_response(organization_shop_employee_failed_manager)
+
+        return error_response(is_error)
+    
+    def list(self, request, *args, **kwargs):
+        check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])
+        if check == emp_manager:
+            shop_licenses = ShopModel.ShopLicense.objects.filter(shop=kwargs['shopid'])
+            if shop_licenses.count() != 0:
+                serializer = ShopSerializer.ShopLicenseSerializer_iDukaan(shop_licenses, many=True)
+                response_map['data'] = serializer.data
+                return Response(response_map, status=status.HTTP_200_OK)
+            else:
+                return error_response(shop_license_not_found)
+            
+        elif check == emp_non_manager:
+            return error_response(organization_shop_employee_failed_manager)
+
+        return error_response(is_error)
+
+
+class ShopFssaiLicenseAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])
+        if check == emp_manager:
+            serializer = ShopSerializer.AddShopFssaiLicenseSerializer_iDukaan(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        elif check == emp_non_manager:
+            return error_response(organization_shop_employee_failed_manager)
+
+        return error_response(is_error)
+    
+    def list(self, request, *args, **kwargs):
+        check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])
+        if check == emp_manager:
+            shop_licenses = ShopModel.ShopFssaiLicense.objects.filter(shop=kwargs['shopid'])
+            if shop_licenses.count() != 0:
+                serializer = ShopSerializer.ShopFssaiLicenseSerializer_iDukaan(shop_licenses, many=True)
+                response_map['data'] = serializer.data
+                return Response(response_map, status=status.HTTP_200_OK)
+            else:
+                return error_response(shop_fssai_license_not_found)
+            
+        elif check == emp_non_manager:
+            return error_response(organization_shop_employee_failed_manager)
+
+        return error_response(is_error)
+
+
+class AddShopInventoryAPIView(generics.CreateAPIView, PermissionRequiredMixin):
+    serializer_class = ShopSerializer.AddShopInventorySerializer_iDukaan
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])
+        if check == emp_manager:
+            try:
+                inventory = ShopModel.ShopInventory.objects.get(shop=request.data['shop'], product=request.data['product'])
+                if inventory.stock:
+                    return error_response(shop_inv_product_listed_stock_page)
+                else:
+                    return error_response(shop_inv_product_listed_out_stock_page)
+            except ShopModel.ShopInventory.DoesNotExist:
+                pass
+
+            try:
+                product = PcModel.Product.objects.get(id=request.data['product'])
+            except PcModel.Product.DoesNotExist:
+                return error_response(product_not_found)
+            
+            if product.is_active == False and product.brand.is_show == True:
+                return error_response(product_not_found)
+            
+            serializer = self.get_serializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        elif check == emp_non_manager:
+            return error_response(organization_shop_employee_failed_manager)
+
+        return error_response(is_error)
+
+
+class ShopInventoryListAPIView(generics.ListAPIView, PermissionRequiredMixin):
+    serializer_class = ShopSerializer.ShopInventoryListSerializer
+    permission_classes = [IsAuthenticated] 
+
+    def get(self, request, *args, **kwargs):
+        check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])
+        if check == emp_manager or check == emp_non_manager:
+            if request.GET.get('q',None) == '1':
+                stock = True
+            elif request.GET.get('q',None) == '0':
+                stock = False
+            else:
+               return error_response(is_error)  
+
+            inv_prods = ShopModel.ShopInventory.objects.filter(shop = kwargs['shopid'], is_stock=stock)
+            if inv_prods.count() == 0:
+                if stock:
+                    return error_response(shop_inv_list_stock_empty)
+                return error_response(shop_inv_list_out_stock_empty)
+            
+            serializer = self.get_serializer(inv_prods, many=True)
+
+            # inv_products = []
+            # for in_prod in inv_prods:
+            #     inv = self.get_serializer(in_prod).data
+            #     product = PcSerializer.ProductListSerializer(in_prod.product).data
+            #     product.pop('id')
+            #     inv.update(product)
+            #     inv_products.append(inv)
+
+            response_map['data'] = serializer.data
+            return Response(response_map, status=status.HTTP_200_OK)
+            
+        return error_response(is_error)
+
+
+class ShopInventoryPatchDeleteAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
+    permission_classes = [IsAuthenticated]
+
+    def partial_update(self, request, *args, **kwargs):
+        check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])
+        if check == emp_manager:
+            try:
+                inv = ShopModel.ShopInventory.objects.get(id=request.data['id'])
+            except ShopModel.ShopInventory.DoesNotExist:
+                return error_response(shop_inv_not_found)
+            
+            serializer = ShopSerializer.PatchShopInventorySerializer_iDukaan(inv, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        elif check == emp_non_manager:
+            return error_response(organization_shop_employee_failed_manager)
+
+        return error_response(is_error)
+    
+
+    def delete(self, request, *args, **kwargs):
+        check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])
+        if check == emp_manager:
+            try:
+                ShopModel.ShopInventory.objects.get(id=request.data['id']).delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            except ShopModel.ShopInventory.DoesNotExist:
+                return error_response(shop_inv_not_found)
+        
         elif check == emp_non_manager:
             return error_response(organization_shop_employee_failed_manager)
 

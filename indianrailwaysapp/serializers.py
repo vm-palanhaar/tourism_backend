@@ -23,6 +23,12 @@ iDukaan APIs Serializer
 6. AddOrgShopEmpSerializer_iDukaan
 7. OrgShopEmpListSerializer_iDukaan
 8. UpdateOrgShopEmpSerializer_iDukaan
+9. AddShopLicenseSerializer_iDukaan
+10. ShopLicenseSerializer_iDukaan
+11. AddShopFssaiLicenseSerializer_iDukaan
+12. ShopFssaiLicenseSerializer_iDukaan
+13. AddShopInventorySerializer_iDukaan
+14. PatchShopInventorySerializer_iDukaan
 
 '''
 
@@ -232,3 +238,53 @@ class UpdateOrgShopEmpSerializer_iDukaan(serializers.ModelSerializer):
         fields = ['id','is_manager','is_sales']
 
 
+class AddShopLicenseSerializer_iDukaan(serializers.ModelSerializer):
+    class Meta:
+        model = models.ShopLicense
+        exclude = ['created_at','updated_at']
+
+
+class ShopLicenseSerializer_iDukaan(serializers.ModelSerializer):
+    id = serializers.CharField()
+    shop = serializers.SerializerMethodField()
+    document = serializers.SerializerMethodField()
+    class Meta:
+        model = models.ShopLicense
+        exclude = ['created_at','updated_at','certificate']
+
+    def get_shop(self, instance):
+        return f'{instance.shop.id}'
+
+    def get_document(self,instance):
+        if instance.end_date == None:
+            return 'Notice'
+        return 'License'
+    
+
+class AddShopFssaiLicenseSerializer_iDukaan(serializers.ModelSerializer):
+    class Meta:
+        model = models.ShopFssaiLicense
+        exclude = ['created_at','updated_at']
+
+
+class ShopFssaiLicenseSerializer_iDukaan(serializers.ModelSerializer):
+    id = serializers.CharField()
+    shop = serializers.SerializerMethodField()
+    class Meta:
+        model = models.ShopFssaiLicense
+        exclude = ['created_at','updated_at','certificate']
+
+    def get_shop(self, instance):
+        return f'{instance.shop.id}'
+
+
+class AddShopInventorySerializer_iDukaan(serializers.ModelSerializer):
+    class Meta:
+        model = models.ShopInventory
+        fields = '__all__'
+
+
+class PatchShopInventorySerializer_iDukaan(serializers.ModelSerializer):
+    class Meta:
+        model = models.ShopInventory
+        fields = ['id','stock']
