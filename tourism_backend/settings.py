@@ -1,16 +1,20 @@
 from google.oauth2 import service_account
 from datetime import timedelta
 from pathlib import Path
+import environ
 import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-o*feb+_lmolr*hv9tls_mqgr1$i4=$vjvuiu(a08ziz#)l%21r'
+env = environ.Env(
+    DEBUG = (bool, False)
+)
+
+environ.Env.read_env(os.path.join(BASE_DIR,'.env'))
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['172.30.48.1','localhost','192.168.29.176']
-
+ALLOWED_HOSTS = ['192.168.29.176']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -79,14 +83,6 @@ REST_KNOX = {'TOKEN_TTL': None}
 
 WSGI_APPLICATION = 'tourism_backend.wsgi.application'
 
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -105,7 +101,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 
@@ -113,9 +109,12 @@ USE_TZ = True
 
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+
+# Google Cloud Storage
 DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
 GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
     os.path.join(BASE_DIR, 'credential.json'))
@@ -124,3 +123,29 @@ GS_BUCKET_NAME = "tourism_india"
 MEDIA_URL = 'https://storage.googleapis.com/media/{}/'.format(GS_BUCKET_NAME)
 GS_FILE_OVERWRITE = True
 GS_BLOB_CHUNK_SIZE = 1024 * 256 * 40
+
+
+
+# Read From .env
+SECRET_KEY = env('DJANGO_SECRET_KEY')
+DEBUG = env('DEBUG')
+
+# Postgres database
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': env('DB_PGSQL_NAME'),
+        'USER': env('DB_PGSQL_USER'),
+        'PASSWORD': env('DB_PGSQL_PWD'),
+        'HOST': env('DB_PGSQL_HOST'),
+        'PORT': env('DB_PGSQL_PORT'),
+    }
+}
+
+# Mail
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER_CUSTOMER_SERVICE = env('EMAIL_CUSTOMER_SERVICE_MAIL')
+EMAIL_HOST_PASSWORD_CUSTOMER_SERVICE = env('EMAIL_CUSTOMER_SERVICE_PWD')
