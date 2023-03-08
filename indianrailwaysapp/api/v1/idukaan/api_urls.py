@@ -53,5 +53,6 @@ urlpatterns = [
         path('shop/list/', API.ShopListAPIView.as_view()),
         #DEV
     ])),
+    path('shop/type/', API.ShopBusinessTypeListAPIView.as_view()),
     #DEV
 ]

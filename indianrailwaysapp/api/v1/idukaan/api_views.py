@@ -70,6 +70,11 @@ def error_response(error):
     return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
 
 
+class ShopBusinessTypeListAPIView(generics.ListAPIView):
+    queryset = ShopModel.ShopBusinessType.objects.all()
+    serializer_class = ShopSerializer.ShopBusinessTypeListSerializer_iDukaan
+
+
 class AddShopAPIView(generics.CreateAPIView, PermissionRequiredMixin):
     serializer_class = ShopSerializer.AddShopSerializer_iDukaan
     permission_classes = [IsAuthenticated]
@@ -106,7 +111,9 @@ class ShopListAPIView(generics.ListAPIView, PermissionRequiredMixin):
         shops = ShopModel.OrganizationShopEmployee.objects.filter(user=request.user)
         if shops.count() != 0:
             for shop in shops:
-                shop_list.append(self.get_serializer(shop.shop).data)
+                serializer = self.get_serializer(shop.shop).data
+                serializer['org'] = f'{shop.organization.id}'
+                shop_list.append(serializer)
             response_map['data'] = shop_list
             return Response(response_map, status=status.HTTP_200_OK)
         
@@ -134,6 +141,7 @@ class OrgShopListAPIView(generics.ListAPIView, PermissionRequiredMixin):
             return Response(response_map, status=status.HTTP_400_BAD_REQUEST)  
         
         elif check == emp_non_manager:
+            shop_list = []
             shops = ShopModel.OrganizationShopEmployee.objects\
                     .filter(user=request.user, organization=kwargs['orgid'])
             if shops.count() != 0:
@@ -352,7 +360,7 @@ class AddShopInventoryAPIView(generics.CreateAPIView, PermissionRequiredMixin):
         if check == emp_manager:
             try:
                 inventory = ShopModel.ShopInventory.objects.get(shop=request.data['shop'], product=request.data['product'])
-                if inventory.stock:
+                if inventory.is_stock:
                     return error_response(shop_inv_product_listed_stock_page)
                 else:
                     return error_response(shop_inv_product_listed_out_stock_page)
@@ -438,7 +446,7 @@ class ShopInventoryPatchDeleteAPIViewset(viewsets.ViewSet, PermissionRequiredMix
         return error_response(is_error)
     
 
-    def delete(self, request, *args, **kwargs):
+    def destroy(self, request, *args, **kwargs):
         check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])
         if check == emp_manager:
             try:

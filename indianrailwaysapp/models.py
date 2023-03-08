@@ -41,16 +41,16 @@ class TimestampModel(models.Model):
     
 
 class ShopType(models.Model):
-    name = models.CharField(max_length=60, verbose_name='Name')
+    name = models.CharField(max_length=60, verbose_name='Name', primary_key=True)
     description = models.TextField(blank=True, null=True, verbose_name='Description')
     def __str__(self):
         return self.name
     
 
 class ShopBusinessType(models.Model):
-    name = models.CharField(max_length=60, verbose_name='Name')
+    name = models.CharField(max_length=60, verbose_name='Name', primary_key=True)
     description = models.TextField(blank=True, null=True, verbose_name='Description')
-    shop_type = models.ManyToManyField(ShopType, related_name='shoptype')
+    shop_type = models.ManyToManyField(ShopType, related_name='shoptypelist')
     def __str__(self):
         return self.name
     
@@ -134,7 +134,6 @@ class OrganizationShopEmployee(TimestampModel):
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, verbose_name='Shop')
     user = models.ForeignKey(UserModel.User, on_delete=models.CASCADE, verbose_name='User')
     is_manager = models.BooleanField(default=False, verbose_name='Manager')
-    is_sales = models.BooleanField(default=False, verbose_name='Sales')
 
 
 class ShopInventory(TimestampModel):

@@ -1,4 +1,7 @@
+from google.oauth2 import service_account
+from datetime import timedelta
 from pathlib import Path
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -6,7 +9,7 @@ SECRET_KEY = 'django-insecure-o*feb+_lmolr*hv9tls_mqgr1$i4=$vjvuiu(a08ziz#)l%21r
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['172.30.48.1','localhost','192.168.29.176']
 
 
 INSTALLED_APPS = [
@@ -67,7 +70,7 @@ REST_FRAMEWORK = {
 
     'DEFAULT_THROTTLE_RATES': {
         'anon' : '51/day',
-        'user' : '100/day'
+        'user' : '500/day'
     }
 }
 
@@ -111,3 +114,12 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
+    os.path.join(BASE_DIR, 'credential.json'))
+DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+GS_BUCKET_NAME = "tourism_india" 
+MEDIA_URL = 'https://storage.googleapis.com/media/{}/'.format(GS_BUCKET_NAME)
+GS_FILE_OVERWRITE = True
+GS_BLOB_CHUNK_SIZE = 1024 * 256 * 40

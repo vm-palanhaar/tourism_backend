@@ -15,20 +15,21 @@ Yatrigan APIs Serializer
 2. ShopDetailsSerializer_Yatrigan
 
 iDukaan APIs Serializer
-1. AddShopSerializer_iDukaan
-2. ShopListSerializer_iDukaan
-3. OrganizationShopListSerializer_iDukaan
-4. PatchShopSerializer_iDukaan
-5. ShopDetailsSerializer_iDukaan
-6. AddOrgShopEmpSerializer_iDukaan
-7. OrgShopEmpListSerializer_iDukaan
-8. UpdateOrgShopEmpSerializer_iDukaan
-9. AddShopLicenseSerializer_iDukaan
-10. ShopLicenseSerializer_iDukaan
-11. AddShopFssaiLicenseSerializer_iDukaan
-12. ShopFssaiLicenseSerializer_iDukaan
-13. AddShopInventorySerializer_iDukaan
-14. PatchShopInventorySerializer_iDukaan
+1. ShopBusinessTypeListSerializer_iDukaan
+2. AddShopSerializer_iDukaan
+3. ShopListSerializer_iDukaan
+4. OrganizationShopListSerializer_iDukaan
+5. PatchShopSerializer_iDukaan
+6. ShopDetailsSerializer_iDukaan
+7. AddOrgShopEmpSerializer_iDukaan
+8. OrgShopEmpListSerializer_iDukaan
+9. UpdateOrgShopEmpSerializer_iDukaan
+10. AddShopLicenseSerializer_iDukaan
+11. ShopLicenseSerializer_iDukaan
+12. AddShopFssaiLicenseSerializer_iDukaan
+13. ShopFssaiLicenseSerializer_iDukaan
+14. AddShopInventorySerializer_iDukaan
+15. PatchShopInventorySerializer_iDukaan
 
 '''
 
@@ -52,7 +53,7 @@ class ShopInventoryListSerializer(serializers.ModelSerializer):
         return f'{instance.shop.id}'
 
     def get_product(self, instance):
-        return PcSerializer.ProductSerializer(instance.product).data
+        return PcSerializer.ProductListSerializer(instance.product).data
 
 
 #Yatrigan
@@ -69,6 +70,13 @@ class ShopDetailsSerializer_Yatrigan(serializers.ModelSerializer):
         fields = ['id','name','image','contact_number',
                     'station','platform_a','platform_b',
                     'is_cash','is_card','is_upi']
+
+
+#iDukaan
+class ShopBusinessTypeListSerializer_iDukaan(serializers.ModelSerializer):
+    class Meta:
+        model = models.ShopBusinessType
+        fields = '__all__'
 
 
 #iDukaan
@@ -154,8 +162,7 @@ class AddShopSerializer_iDukaan(serializers.ModelSerializer):
             organization = organization,
             shop = shop,
             user = user,
-            is_manager = True,
-            is_sales = True
+            is_manager = True
         )
         organization_shop_employee.save()
 
@@ -196,7 +203,7 @@ class AddOrgShopEmpSerializer_iDukaan(serializers.ModelSerializer):
     empid = serializers.CharField()
     class Meta:
         model = models.OrganizationShopEmployee
-        fields = ['id','empid','shop','is_manager','is_sales']
+        fields = ['id','empid','shop','is_manager']
 
     def create(self, validated_data):
         org_emp = OrgModel.OrganizationEmployee.objects.get(id=validated_data['empid'])
@@ -205,7 +212,6 @@ class AddOrgShopEmpSerializer_iDukaan(serializers.ModelSerializer):
             user = org_emp.user,
             shop = validated_data['shop'],
             is_manager = validated_data['is_manager'],
-            is_sales = validated_data['is_sales']
         )
         employee.save()
         return employee
@@ -235,7 +241,7 @@ class UpdateOrgShopEmpSerializer_iDukaan(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, read_only=True)
     class Meta:
         model = models.OrganizationShopEmployee
-        fields = ['id','is_manager','is_sales']
+        fields = ['id','is_manager']
 
 
 class AddShopLicenseSerializer_iDukaan(serializers.ModelSerializer):
@@ -287,4 +293,4 @@ class AddShopInventorySerializer_iDukaan(serializers.ModelSerializer):
 class PatchShopInventorySerializer_iDukaan(serializers.ModelSerializer):
     class Meta:
         model = models.ShopInventory
-        fields = ['id','stock']
+        fields = ['id','is_stock']
