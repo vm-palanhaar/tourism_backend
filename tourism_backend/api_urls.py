@@ -6,4 +6,5 @@ urlpatterns = [
     path('user/', include('userapp.api.api_urls')),
     path('pc/', include('productapp.api.api_urls')),
     path('business/', include('businessapp.api.api_urls')),
+    path('mobile/', include('mobileapp.api.api_urls')),
 ]

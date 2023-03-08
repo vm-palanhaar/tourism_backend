@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'userapp',
     'productapp',
     'businessapp',
+    'mobileapp',
 ]
 
 AUTH_USER_MODEL = 'userapp.User'
