@@ -197,6 +197,7 @@ class OrganizationEmployeeAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
                     failed_response_map['error'] = organization_update_delete_self_employee
                     return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
                 emp.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
             failed_response_map['error'] = organization_update_delete_employee_not_found
             return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
 

@@ -17,7 +17,7 @@ PROD
 DEV
 '''
 
-
+failed_response_map = {'error':None}
 response_map = {"data":None}
 
 login_failed_user_not_exist = 'User does not exist. Click on Sign Up button to register.'
@@ -45,13 +45,13 @@ class UserLoginAPIView(generics.GenericAPIView):
         try:
             user = models.User.objects.get(username = request.data['username'])
         except models.User.DoesNotExist:
-            response_map['data'] = login_failed_user_not_exist
-            return Response(response_map, status=status.HTTP_400_BAD_REQUEST)
+            failed_response_map['error'] = login_failed_user_not_exist
+            return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
     
         if user.is_active == False:
             #TODO: Email verification to user
-            response_map['data'] = login_failed_user_not_active
-            return Response(response_map, status=status.HTTP_400_BAD_REQUEST)
+            failed_response_map['error'] = login_failed_user_not_active
+            return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
     
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -59,8 +59,8 @@ class UserLoginAPIView(generics.GenericAPIView):
             login(request, user)
             return Response(serializers.UserLoginResponseSerializer(user).data)
         
-        response_map['data'] = login_failed_user_invalid_credentials
-        return Response(response_map, status=status.HTTP_400_BAD_REQUEST)
+        failed_response_map['error'] = login_failed_user_invalid_credentials
+        return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserProfileAPIView(generics.GenericAPIView, PermissionRequiredMixin):
@@ -70,8 +70,8 @@ class UserProfileAPIView(generics.GenericAPIView, PermissionRequiredMixin):
         try:
             user = models.User.objects.get(username = request.user)
         except models.User.DoesNotExist:
-            response_map['data'] = profile_failed_user_not_exist
-            return Response(response_map, status=status.HTTP_400_BAD_REQUEST)
+            failed_response_map['error'] = profile_failed_user_not_exist
+            return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = serializers.UserSerializer(user)
         response_map['data'] = serializer.data

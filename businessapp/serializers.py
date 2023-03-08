@@ -2,6 +2,8 @@ from rest_framework import serializers
 
 from businessapp import models as OrgModel
 from userapp import models as UserModel
+from indianrailwaysapp import models as IRModel
+from indianrailwaysapp import serializers as IRSerializer
 
 
 '''
@@ -42,21 +44,31 @@ class AddOrganizationSerializer(serializers.ModelSerializer):
 class OrganizationListSerializer(serializers.ModelSerializer):
     id = serializers.CharField()
     entity = serializers.CharField()
+    ir_shops = serializers.SerializerMethodField()
     class Meta:
         model = OrgModel.Organization
         exclude = ['registration','document','created_at','updated_at']
+
+    def get_ir_shops(self, instance):
+        shops = IRModel.OrganizationShop.objects.filter(organization=instance).count()
+        return shops
 
 
 class OrganizationSerializer(serializers.ModelSerializer):
     id = serializers.CharField()
     entity = serializers.CharField()
     employees = serializers.SerializerMethodField()
+    ir_shops = serializers.SerializerMethodField()
     class Meta:
         model = OrgModel.Organization
-        fields = ['id','entity','name','employees']
+        fields = ['id','entity','name','employees','ir_shops']
     
     def get_employees(self, instance):
         return OrgModel.OrganizationEmployee.objects.filter(organization=instance).count()
+    
+    def get_ir_shops(self, instance):
+        shops = IRModel.OrganizationShop.objects.filter(organization=instance).count()
+        return shops
     
 
 class AddOrganizationEmployeeSerializer(serializers.ModelSerializer):
