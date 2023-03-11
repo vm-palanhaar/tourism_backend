@@ -118,7 +118,7 @@ class ShopListAPIView(generics.ListAPIView, PermissionRequiredMixin):
             return Response(response_map, status=status.HTTP_200_OK)
         
         failed_response_map['error'] = shops_list_not_found
-        return Response(response_map, status=status.HTTP_400_BAD_REQUEST)
+        return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
 
 
 class OrgShopListAPIView(generics.ListAPIView, PermissionRequiredMixin):
@@ -138,7 +138,7 @@ class OrgShopListAPIView(generics.ListAPIView, PermissionRequiredMixin):
                 response_map['data'] = shop_list
                 return Response(response_map, status=status.HTTP_200_OK)
             failed_response_map['error'] = organization_shop_employee_failed
-            return Response(response_map, status=status.HTTP_400_BAD_REQUEST)  
+            return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)  
         
         elif check == emp_non_manager:
             shop_list = []
@@ -152,7 +152,7 @@ class OrgShopListAPIView(generics.ListAPIView, PermissionRequiredMixin):
                 response_map['data'] = shop_list
                 return Response(response_map, status=status.HTTP_200_OK)
             failed_response_map['error'] = organization_shop_employee_failed
-            return Response(response_map, status=status.HTTP_400_BAD_REQUEST)
+            return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
         
         else:
             failed_response_map['error'] = is_error
