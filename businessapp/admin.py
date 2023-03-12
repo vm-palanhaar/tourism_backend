@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from businessapp import models
+from indianrailwaysapp import models as IrModel
 
 
 @admin.register(models.OrganizationType)
@@ -18,10 +19,14 @@ class OrganizationEmployeeAdmin(admin.TabularInline):
     model = models.OrganizationEmployee
     extra = 1
 
+class IrOrgShopAdmin(admin.TabularInline):
+    model = IrModel.OrganizationShop
+    extra = 1
+
 @admin.register(models.Organization)
 class OrganizationConfig(admin.ModelAdmin):
     list_display = ['name','registration','entity','is_active']
     list_filter = ['entity','is_active']
     search_fields = ['name','registration']
     raw_id_fields = ['entity']
-    inlines = [OrganizationEmployeeAdmin]
+    inlines = [OrganizationEmployeeAdmin,IrOrgShopAdmin]
