@@ -118,7 +118,7 @@ DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
 GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
     os.path.join(BASE_DIR, 'credential.json'))
 DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
-GS_BUCKET_NAME = "tourism_india" 
+GS_BUCKET_NAME = env('GOOGLE_CLOUD_STORAGE_BUCKET')
 MEDIA_URL = 'https://storage.googleapis.com/media/{}/'.format(GS_BUCKET_NAME)
 GS_FILE_OVERWRITE = True
 GS_BLOB_CHUNK_SIZE = 1024 * 256 * 40

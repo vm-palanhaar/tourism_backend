@@ -45,7 +45,8 @@ class OrgStateGstOps(TimestampModel):
     org = models.ForeignKey(Organization, on_delete=models.CASCADE, verbose_name='Organization')
     state = models.ForeignKey(GeoModel.State, on_delete=models.CASCADE, verbose_name='State')
     gstin = models.CharField(max_length=15, unique=True, blank=True, null=True, verbose_name='GSTIN')
-    is_active = models.BooleanField(default=True, verbose_name='Active')
     expiry = models.DateField(blank=True, null=True, verbose_name='Expiry Date')
+    is_active = models.BooleanField(default=True, verbose_name='Active')
+    is_valid = models.BooleanField(default=False, verbose_name='Valid')
     def __str__(self):
         return self.state.name

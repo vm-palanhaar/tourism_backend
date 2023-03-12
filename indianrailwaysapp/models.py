@@ -92,6 +92,7 @@ class ShopLicense(TimestampModel):
     start_date = models.DateField(blank=True, null=True, verbose_name='Start Date')
     end_date = models.DateField(blank=True, null=True, verbose_name='End Date')
     is_current = models.BooleanField(default=True, verbose_name='Current')
+    is_valid = models.BooleanField(default=False, verbose_name='Valid')
     def __str__(self):
         return self.shop.name
 
@@ -107,19 +108,15 @@ class ShopFssaiLicense(TimestampModel):
     start_date = models.DateField(blank=True, verbose_name='Start Date')
     end_date = models.DateField(blank=True, verbose_name='End Date')
     is_current = models.BooleanField(default=True, verbose_name='Current')
+    is_valid = models.BooleanField(default=False, verbose_name='Valid')
     def __str__(self):
         return self.shop.name
     
 
-def upload_to_shop_gst(instance,filename):
-    shopname = instance.shop.name
-    return f'business/shops/{shopname}/gst/{filename}'
-
 class ShopGst(TimestampModel):
+    organization = models.ForeignKey(OrgModel.Organization, on_delete=models.CASCADE, verbose_name='Organization')
+    org_st_gst = models.ForeignKey(OrgModel.OrgStateGstOps, on_delete=models.CASCADE, verbose_name='Organizaton-State')
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, verbose_name='Shop Name')
-    registration = models.CharField(max_length=30, verbose_name='GST Number')
-    certificate = models.FileField(_('Document'), upload_to=upload_to_shop_gst)
-    is_current = models.BooleanField(default=True, verbose_name='Current')
     def __str__(self):
         return self.shop.name
 

@@ -87,12 +87,6 @@ class AddShopSerializer_iDukaan(serializers.ModelSerializer):
     lic_cert = serializers.FileField(required=False)
     lic_start_date = serializers.DateField(required=True)
     lic_end_date = serializers.DateField(required=True)
-    fssai_lic_number = serializers.CharField(required=False)
-    fssai_lic_cert = serializers.FileField(required=False)
-    fssai_start_date = serializers.DateField(required=False)
-    fssai_end_date = serializers.DateField(required=False)
-    gst_number = serializers.CharField(required=False)
-    gst_cert = serializers.FileField(required=False)
     class Meta:
         model = models.Shop
         fields = '__all__'
@@ -125,30 +119,10 @@ class AddShopSerializer_iDukaan(serializers.ModelSerializer):
             certificate = validated_data['lic_cert'],
             start_date = validated_data['lic_start_date'],
             end_date = validated_data['lic_end_date'],
+            is_current = True,
+            is_valid = False
         )
         shop_license.save()
-
-        try:
-            shop_fssai_license = models.ShopFssaiLicense.objects.create(
-                shop = shop,
-                registration = validated_data['fssai_lic_number'],
-                certificate = validated_data['fssai_lic_cert'],
-                start_date = validated_data['fssai_start_date'],
-                end_date = validated_data['fssai_end_date']
-            )
-            shop_fssai_license.save()
-        except KeyError:
-            pass
-            
-        try:
-            shop_gst = models.ShopGst.objects.create(
-                shop = shop,
-                registration = validated_data['gst_number'],
-                certificate = validated_data['gst_cert']
-            )
-            shop_gst.save()
-        except KeyError:
-            pass
 
         organization = OrgModel.Organization.objects.get(id=validated_data['organization'])
         organization_shop = models.OrganizationShop.objects.create(
@@ -294,3 +268,24 @@ class PatchShopInventorySerializer_iDukaan(serializers.ModelSerializer):
     class Meta:
         model = models.ShopInventory
         fields = ['id','is_stock']
+
+
+class AddIrShopGstSerializer_iDukaan(serializers.ModelSerializer):
+    class Meta:
+        model = models.ShopGst
+        exclude = ['created_at','updated_at']
+
+
+class ShopGstSerializer_iDukaan(serializers.ModelSerializer):
+    id = serializers.CharField()
+    org = serializers.SerializerMethodField()
+    shop = serializers.SerializerMethodField()
+    class Meta:
+        model = models.ShopGst
+        exclude = ['created_at','updated_at']
+
+    def get_org(self, instance):
+        return f'{instance.org.id}'
+
+    def get_shop(self, instance):
+        return f'{instance.shop.id}'
