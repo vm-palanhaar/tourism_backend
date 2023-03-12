@@ -17,11 +17,15 @@ class OrganizationTypeConfig(admin.ModelAdmin):
 
 class OrganizationEmployeeAdmin(admin.TabularInline):
     model = models.OrganizationEmployee
-    extra = 1
+    extra = 0
 
 class IrOrgShopAdmin(admin.TabularInline):
     model = IrModel.OrganizationShop
-    extra = 1
+    extra = 0
+
+class OrgStateGstOpsAdmin(admin.TabularInline):
+    model = models.OrgStateGstOps
+    extra = 0
 
 @admin.register(models.Organization)
 class OrganizationConfig(admin.ModelAdmin):
@@ -29,4 +33,4 @@ class OrganizationConfig(admin.ModelAdmin):
     list_filter = ['entity','is_active']
     search_fields = ['name','registration']
     raw_id_fields = ['entity']
-    inlines = [OrganizationEmployeeAdmin,IrOrgShopAdmin]
+    inlines = [OrganizationEmployeeAdmin,OrgStateGstOpsAdmin,IrOrgShopAdmin]

@@ -2,6 +2,7 @@ from django.utils.translation import gettext_lazy as _
 from django.db import models
 
 from userapp import models as UserModel
+from geographyapp import models as GeoModel
 
 
 class TimestampModel(models.Model):
@@ -32,9 +33,19 @@ class Organization(TimestampModel):
         return self.name
 
 
-class OrganizationEmployee(models.Model):
+class OrganizationEmployee(TimestampModel):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, verbose_name='Organization')
     user = models.ForeignKey(UserModel.User, on_delete=models.CASCADE, verbose_name='Employee')
     manager = models.BooleanField(default=False, verbose_name='Manager')
     def __str__(self):
         return self.organization.name
+
+
+class OrgStateGstOps(TimestampModel):
+    org = models.ForeignKey(Organization, on_delete=models.CASCADE, verbose_name='Organization')
+    state = models.ForeignKey(GeoModel.State, on_delete=models.CASCADE, verbose_name='State')
+    gstin = models.CharField(max_length=15, unique=True, blank=True, null=True, verbose_name='GSTIN')
+    is_active = models.BooleanField(default=True, verbose_name='Active')
+    expiry = models.DateField(blank=True, null=True, verbose_name='Expiry Date')
+    def __str__(self):
+        return self.state.name

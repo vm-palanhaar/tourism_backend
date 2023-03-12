@@ -99,4 +99,19 @@ class OrganizationEmployeeListSerializer(serializers.ModelSerializer):
 
     def get_organization(self, instance):
         return f'{instance.organization.id}'
-    
+
+
+class AddOrgStateGstOpsSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False, read_only=True)
+    class Meta:
+        model = OrgModel.OrgStateGstOps
+        fields = '__all__'
+
+
+class OrgStateGstOpsListSerializer(serializers.ModelSerializer):
+    id = serializers.CharField()
+    org = serializers.CharField()
+    state = serializers.CharField()
+    class Meta:
+        model = OrgModel.OrgStateGstOps
+        fields = '__all__'
