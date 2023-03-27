@@ -114,4 +114,4 @@ class OrgStateGstOpsListSerializer(serializers.ModelSerializer):
     state = serializers.CharField()
     class Meta:
         model = OrgModel.OrgStateGstOps
-        fields = '__all__'
+        exclude = ['doc','created_at','updated_at']

@@ -35,6 +35,7 @@ product_not_found = 'Product is not available!'
 shop_inv_list_stock_empty = 'Products are not yet added to shop or out of stock!'
 shop_inv_list_out_stock_empty = 'Products are not yet added to shop or in stock!'
 shop_inv_not_found = 'Product is already discarded from shop!'
+shop_gst_not_found = 'Shop is not associated with GSTIN!'
 bad_action = 'Bad action!'
 
 emp_manager = 1
@@ -408,15 +409,6 @@ class ShopInventoryListAPIView(generics.ListAPIView, PermissionRequiredMixin):
                 return error_response(shop_inv_list_out_stock_empty)
             
             serializer = self.get_serializer(inv_prods, many=True)
-
-            # inv_products = []
-            # for in_prod in inv_prods:
-            #     inv = self.get_serializer(in_prod).data
-            #     product = PcSerializer.ProductListSerializer(in_prod.product).data
-            #     product.pop('id')
-            #     inv.update(product)
-            #     inv_products.append(inv)
-
             response_map['data'] = serializer.data
             return Response(response_map, status=status.HTTP_200_OK)
             
@@ -455,6 +447,39 @@ class ShopInventoryPatchDeleteAPIViewset(viewsets.ViewSet, PermissionRequiredMix
             except ShopModel.ShopInventory.DoesNotExist:
                 return error_response(shop_inv_not_found)
         
+        elif check == emp_non_manager:
+            return error_response(organization_shop_employee_failed_manager)
+
+        return error_response(is_error)
+
+
+class ShopGstPostGetAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])
+        if check == 1:
+            serializer = ShopSerializer.AddIrShopGstSerializer_iDukaan(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        elif check == emp_non_manager:
+            return error_response(organization_shop_employee_failed_manager)
+
+        return error_response(is_error)
+
+    def list(self, request, *args, **kwargs):
+        check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])
+        if check == 1:
+            gst = ShopModel.ShopGst.objects.filter(org=kwargs['orgid'], shop=kwargs['shopid'])
+            if gst.count() > 0:
+                serializer = ShopSerializer.ShopGstSerializer_iDukaan(gst, many=True)
+                response_map['data'] = serializer.data
+                return Response(response_map, status=status.HTTP_200_OK)
+            return error_response(shop_gst_not_found)
+
         elif check == emp_non_manager:
             return error_response(organization_shop_employee_failed_manager)
 

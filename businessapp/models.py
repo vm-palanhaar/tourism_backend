@@ -20,8 +20,8 @@ class OrganizationType(models.Model):
 
 
 def upload_to_organization(instance,filename):
-    organizationname = instance.name
-    return f'business/organization/{organizationname}/{filename}'
+    orgname = instance.name
+    return f'business/organization/{orgname}/{filename}'
 
 class Organization(TimestampModel):
     entity = models.ForeignKey(OrganizationType, on_delete=models.CASCADE, verbose_name='Entity')
@@ -39,12 +39,19 @@ class OrganizationEmployee(TimestampModel):
     manager = models.BooleanField(default=False, verbose_name='Manager')
     def __str__(self):
         return self.organization.name
+    
+
+def upload_to_org_gst(instance,filename):
+    orgname = instance.org.name
+    statename = instance.state.name
+    return f'business/organization/{orgname}/gst/{filename}'
 
 
 class OrgStateGstOps(TimestampModel):
     org = models.ForeignKey(Organization, on_delete=models.CASCADE, verbose_name='Organization')
     state = models.ForeignKey(GeoModel.State, on_delete=models.CASCADE, verbose_name='State')
     gstin = models.CharField(max_length=15, unique=True, blank=True, null=True, verbose_name='GSTIN')
+    doc = models.FileField(_('Document'), blank=True, null=True, upload_to=upload_to_org_gst)
     expiry = models.DateField(blank=True, null=True, verbose_name='Expiry Date')
     is_active = models.BooleanField(default=True, verbose_name='Active')
     is_valid = models.BooleanField(default=False, verbose_name='Valid')

@@ -4,6 +4,7 @@ from indianrailwaysapp import models
 from userapp import models as UserModel
 from productapp import serializers as PcSerializer
 from businessapp import models as OrgModel
+from businessapp import serializers as OrgSerializer
 
 '''
 Common APIs Serializer
@@ -58,18 +59,18 @@ class ShopInventoryListSerializer(serializers.ModelSerializer):
 
 #Yatrigan
 class ShopListSerializer_Yatrigan(serializers.ModelSerializer):
+    id = serializers.CharField()
     class Meta:
         model = models.Shop
-        fields = ['name','image','station','platform_a','platform_b']
+        fields = ['id','name','image','station','platform_a','platform_b']
 
 
 #Yatrigan
 class ShopDetailsSerializer_Yatrigan(serializers.ModelSerializer):
+    id = serializers.CharField()
     class Meta:
         model = models.Shop
-        fields = ['id','name','image','contact_number',
-                    'station','platform_a','platform_b',
-                    'is_cash','is_card','is_upi']
+        fields = ['id','name','image','contact_number','station','platform_a','platform_b','is_cash','is_card','is_upi']
 
 
 #iDukaan
@@ -279,6 +280,7 @@ class AddIrShopGstSerializer_iDukaan(serializers.ModelSerializer):
 class ShopGstSerializer_iDukaan(serializers.ModelSerializer):
     id = serializers.CharField()
     org = serializers.SerializerMethodField()
+    org_st_gst = OrgSerializer.OrgStateGstOpsListSerializer()
     shop = serializers.SerializerMethodField()
     class Meta:
         model = models.ShopGst

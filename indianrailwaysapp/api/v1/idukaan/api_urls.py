@@ -27,6 +27,11 @@ org_shop_inv_set = API.ShopInventoryPatchDeleteAPIViewset.as_view({
     'delete': 'destroy'
 })
 
+org_shop_gst = API.ShopGstPostGetAPIViewset.as_view({
+    'post': 'create',
+    'get': 'list'
+})
+
 urlpatterns = [
     #PROD
     path('org/', include([
@@ -47,6 +52,8 @@ urlpatterns = [
             path('shop/<str:shopid>/inv/', API.AddShopInventoryAPIView.as_view()),
             path('shop/<str:shopid>/inv/stock', API.ShopInventoryListAPIView.as_view()),
             path('shop/<str:shopid>/inv/<str:invid>/', org_shop_inv_set),
+
+            path('shop/<str:shopid>/gst/', org_shop_gst),
 
             #DEV
         ])),
