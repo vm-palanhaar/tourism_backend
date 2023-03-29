@@ -12,7 +12,7 @@ env = environ.Env(
 
 environ.Env.read_env(os.path.join(BASE_DIR,'.env'))
 
-ALLOWED_HOSTS = ['192.168.29.176','127.0.0.1']
+ALLOWED_HOSTS = ['192.168.29.176','127.0.0.1','192.168.128.199']
 
 INSTALLED_APPS = [
     'django.contrib.admin',

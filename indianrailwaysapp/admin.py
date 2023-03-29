@@ -94,3 +94,8 @@ class ShopConfig(admin.ModelAdmin):
     )
     inlines = [OrganizationShopAdmin,ShopLicenseAdmin,ShopFssaiLicenseAdmin,
                ShopGstAdmin,ShopInventoryAdmin,OrganizationShopEmployeeAdmin]   
+
+
+# Helpine Numbers
+
+admin.site.register(models.IrGRP)

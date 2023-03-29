@@ -4,6 +4,7 @@ from django.db import models
 from businessapp import models as OrgModel
 from userapp import models as UserModel
 from productapp import models as PcModel
+from geographyapp import models as GeoModel
 
 class RailwayZone(models.Model):
     code = models.CharField(max_length=5, primary_key=True, verbose_name='Zone Code')
@@ -137,3 +138,11 @@ class ShopInventory(TimestampModel):
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, verbose_name='Shop')
     product = models.ForeignKey(PcModel.Product, on_delete=models.CASCADE, verbose_name='Product')
     is_stock = models.BooleanField(default=True, verbose_name='Stock')
+
+
+class IrGRP(models.Model):
+    state = models.ForeignKey(GeoModel.State, on_delete=models.CASCADE, verbose_name='State')
+    contact_number = models.CharField(max_length=15, verbose_name='Contact Number')
+    whatsapp = models.CharField(max_length=15, blank=True, null=True, verbose_name='WhatsApp')
+    def __str__(self) :
+        return self.state.name

@@ -55,6 +55,18 @@ class ShopInventoryListSerializer(serializers.ModelSerializer):
 
     def get_product(self, instance):
         return PcSerializer.ProductListSerializer(instance.product).data
+    
+
+#Common
+class IrGRPListSerializer(serializers.ModelSerializer):
+    id = serializers.CharField()
+    state = serializers.SerializerMethodField()
+    class Meta:
+        model = models.IrGRP
+        fields = '__all__'
+
+    def get_state(self, instance):
+        return instance.state.name
 
 
 #Yatrigan
