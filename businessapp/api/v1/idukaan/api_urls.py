@@ -7,6 +7,11 @@ org_set = API.OrganizationEmployeeAPIViewset.as_view({
     'delete': 'destroy'
 })
 
+org_state_ops_set = API.OrgStateGstAPIViewset.as_view({
+    'post': 'create',
+    'get': 'list'
+})
+
 
 urlpatterns = [
     #PROD
@@ -18,4 +23,5 @@ urlpatterns = [
     path('organization/<str:orgid>/employee/list/', API.OrganizationEmployeeListAPIView.as_view()),
     path('organization/<str:orgid>/employee/<str:empid>/', org_set),
     #DEV
+    path('organization/<str:orgid>/gst/', org_state_ops_set),
 ]

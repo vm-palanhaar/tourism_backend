@@ -7,4 +7,5 @@ urlpatterns = [
     path('pc/', include('productapp.api.api_urls')),
     path('business/', include('businessapp.api.api_urls')),
     path('mobile/', include('mobileapp.api.api_urls')),
+    path('geography/', include('geographyapp.api.api_urls')),
 ]

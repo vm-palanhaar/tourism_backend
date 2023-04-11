@@ -32,6 +32,7 @@ organization_update_delete_employee_not_found = 'User is not associated with org
 user_not_found = 'User does not exist!'
 organization_employee_failed_manager = 'You are not authorized to update organization!'
 organization_update_delete_self_employee = 'Bad action!'
+org_state_gst_not_found = 'Organization do not support inter-state operations'
 
 '''
 1 : Manager
@@ -52,6 +53,10 @@ def validate_emp(user, org):
             return OrgModel.OrganizationEmployee.objects.get(id=user, organization=org)
         except OrgModel.OrganizationEmployee.DoesNotExist:
             return None
+        
+def error_response(error):
+    failed_response_map['error'] = error
+    return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
 
 
 class OrganizationTypeListAPIView(generics.ListAPIView, PermissionRequiredMixin):
@@ -68,8 +73,7 @@ class AddOrganizationAPIView(generics.CreateAPIView, PermissionRequiredMixin):
     def post(self, request, *args, **kwargs):
         try:
             OrgModel.Organization.objects.get(registration=request.data['registration'])
-            failed_response_map['error'] = organization_add_failed_already_exist
-            return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(organization_add_failed_already_exist)
         except OrgModel.Organization.DoesNotExist:
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid():
@@ -92,8 +96,7 @@ class OrganizationListAPIView(generics.ListAPIView, PermissionRequiredMixin):
             response_map['data'] = organizations
             return Response(response_map, status=status.HTTP_200_OK)
         
-        failed_response_map['error'] = organization_employee_not_found
-        return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+        return error_response(organization_employee_not_found)
 
 
 class OrganizationDetailsAPIView(generics.RetrieveAPIView, PermissionRequiredMixin):
@@ -108,8 +111,7 @@ class OrganizationDetailsAPIView(generics.RetrieveAPIView, PermissionRequiredMix
             response_map['data'] = serializer.data
             return Response(response_map, status=status.HTTP_200_OK)
         
-        failed_response_map['error'] = is_error
-        return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+        return error_response(is_error)
 
 
 class AddOrganizationEmployeeAPIView(generics.CreateAPIView, PermissionRequiredMixin):
@@ -122,14 +124,12 @@ class AddOrganizationEmployeeAPIView(generics.CreateAPIView, PermissionRequiredM
             try:
                 OrgModel.OrganizationEmployee.objects.get(user=request.data['user'], 
                                                         organization=request.data['organization'])
-                failed_response_map['error'] = organization_add_employee_already_exist
-                return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+                return error_response(organization_add_employee_already_exist)
             except OrgModel.OrganizationEmployee.DoesNotExist:
                 try:
                     UserModel.User.objects.get(username=request.data['user'])
                 except UserModel.User.DoesNotExist:
-                    failed_response_map['error'] = user_not_found
-                    return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+                    return error_response(user_not_found)
                 serializer = self.get_serializer(data=request.data)
                 if serializer.is_valid():
                     serializer.save()
@@ -137,11 +137,9 @@ class AddOrganizationEmployeeAPIView(generics.CreateAPIView, PermissionRequiredM
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
         elif check == 0:
-            failed_response_map['error'] = organization_employee_failed_manager
-            return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(organization_employee_failed_manager)
         
-        failed_response_map['error'] = is_error
-        return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+        return error_response(is_error)
 
 
 class OrganizationEmployeeListAPIView(generics.ListAPIView, PermissionRequiredMixin):
@@ -156,8 +154,7 @@ class OrganizationEmployeeListAPIView(generics.ListAPIView, PermissionRequiredMi
             response_map['data'] = serializer.data
             return Response(response_map, status=status.HTTP_200_OK)
         
-        failed_response_map['error'] = is_error
-        return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+        return error_response(is_error)
 
 
 class OrganizationEmployeeAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
@@ -169,23 +166,19 @@ class OrganizationEmployeeAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
             emp = validate_emp(request.data['id'], kwargs['orgid'])
             if emp != None:
                 if request.user == emp.user:
-                    failed_response_map['error'] = organization_update_delete_self_employee
-                    return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+                    return error_response(organization_update_delete_self_employee)
                 serializer = OrgSerializer.OrganizationEmployeeListSerializer(emp, data=request.data, partial=True)
                 if serializer.is_valid():
                     serializer.save()
                     return Response(status=status.HTTP_200_OK)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
-            failed_response_map['error'] = organization_update_delete_employee_not_found
-            return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(organization_update_delete_employee_not_found)
 
         elif check == 0:
-            failed_response_map['error'] = organization_employee_failed_manager
-            return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(organization_employee_failed_manager)
         
-        failed_response_map['error'] = is_error
-        return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+        return error_response(is_error)
 
 
     def destroy(self, request, *args, **kwargs):
@@ -194,16 +187,46 @@ class OrganizationEmployeeAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
             emp = validate_emp(kwargs['empid'], kwargs['orgid'])
             if emp != None:
                 if request.user == emp.user:
-                    failed_response_map['error'] = organization_update_delete_self_employee
-                    return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+                    return error_response(organization_update_delete_self_employee)
                 emp.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
-            failed_response_map['error'] = organization_update_delete_employee_not_found
-            return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(organization_update_delete_employee_not_found)
 
         elif check == 0:
-            failed_response_map['error'] = organization_employee_failed_manager
-            return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(organization_employee_failed_manager)
         
-        failed_response_map['error'] = is_error
-        return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+        return error_response(is_error)
+
+
+class OrgStateGstAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        check = validate_org_emp(request.user, kwargs['orgid'])
+        if check == 1:
+            serializer = OrgSerializer.AddOrgStateGstOpsSerializer(data = request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        elif check == 0:
+            return error_response(organization_employee_failed_manager)
+        
+        return error_response(is_error)
+
+
+    def list(self, request, *args, **kwargs):
+        check = validate_org_emp(request.user, kwargs['orgid'])
+        if check == 1:
+            ops = OrgModel.OrgStateGstOps.objects.filter(org = kwargs['orgid'])
+            if ops.count() > 0:
+                serializer = OrgSerializer.OrgStateGstOpsListSerializer(ops, many=True)
+                response_map['data'] = serializer.data
+                return Response(response_map, status=status.HTTP_200_OK)
+            return error_response(org_state_gst_not_found)
+
+        elif check == 0:
+            return error_response(organization_employee_failed_manager)
+        
+        return error_response(is_error)
