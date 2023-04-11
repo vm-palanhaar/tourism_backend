@@ -39,17 +39,9 @@ class AddBrandSerializer(serializers.ModelSerializer):
 
 class BrandListSerializer(serializers.ModelSerializer):
     id = serializers.CharField()
-    active_product = serializers.SerializerMethodField()
-    in_active_product = serializers.SerializerMethodField()
     class Meta:
         model = models.Brand
         exclude = ['created_at','updated_at','is_show',]
-
-    def get_active_product(self, instance):
-        return models.Product.objects.filter(brand=instance, is_active=True).count()
-
-    def get_in_active_product(self, instance):
-        return models.Product.objects.filter(brand=instance, is_active=False).count()
 
 
 class ProductCategoryListSerializer(serializers.ModelSerializer):
@@ -91,7 +83,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     brand = serializers.SerializerMethodField()
     class Meta:
         model = models.Product
-        fields = ('id','brand','name','image','price','category')
+        fields = ('id','brand','name','image','price','category','is_active')
 
     def get_brand(self, instance):
         if instance.brand.is_show == False:

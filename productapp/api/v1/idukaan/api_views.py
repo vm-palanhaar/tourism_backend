@@ -1,3 +1,5 @@
+import re, math
+
 from django.contrib.auth.mixins import PermissionRequiredMixin
 
 from rest_framework.permissions import IsAuthenticated
@@ -30,11 +32,16 @@ brands_active_not_found = 'Brands not registered or verification in-progress!'
 brands_in_active_not_found = 'Brands not registered or verification completed!'
 
 product_add_brand_not_found = 'Brand not registered or not active!'
-product_search_brand_not_found = 'Brand not registered!'
+product_search_brand_not_found = 'Products not registered!'
 products_active_not_found = 'Products not registered or verification in-progress!'
 products_in_active_not_found = 'Products not registered or verification completed!'
 product_delete_not_applicable = 'Product deletion not allowed!'
 product_update_not_applicable = 'Product modification not allowed!'
+
+
+def error_response(error):
+    failed_response_map['error'] = error
+    return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AddBrandAPIView(generics.CreateAPIView, PermissionRequiredMixin):
@@ -50,22 +57,6 @@ class AddBrandAPIView(generics.CreateAPIView, PermissionRequiredMixin):
                 response_map['data'] = serializer.data
                 return Response(response_map, status=status.HTTP_200_OK)
         return super().post(request, *args, **kwargs)
-
-
-class BrandListSearchAPIView(generics.ListAPIView, PermissionRequiredMixin):
-    serializer_class = PCSerializer.BrandListSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        brands = PCModel.Brand.objects.filter(name__icontains=request.GET.get('q',None), is_show=True)
-
-        if brands.count() == 0:
-            failed_response_map['error'] = brands_search_not_found
-            return Response(failed_response_map, status=status.HTTP_200_OK)
-
-        serializer = self.get_serializer(brands, many=True)
-        response_map['data'] = serializer.data
-        return Response(response_map, status=status.HTTP_200_OK)
     
 
 class BrandListAPIView(generics.ListAPIView, PermissionRequiredMixin):
@@ -74,22 +65,40 @@ class BrandListAPIView(generics.ListAPIView, PermissionRequiredMixin):
 
     def get(self, request, *args, **kwargs):
 
-        if request.GET.get('q',None) == '1':
-            brands = PCModel.Brand.objects.filter(is_show=True, is_active=True)
-            is_failure = brands_active_not_found
-        elif request.GET.get('q',None) == '0':
-            brands = PCModel.Brand.objects.filter(is_show=True, is_active=False)
-            is_failure = brands_in_active_not_found
-        else:
-            failed_response_map['error'] = is_error
-            return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+        if len(re.findall("\d",request.GET.get('page'))) == 0 or int(request.GET.get('page')) == 0:
+            return error_response(is_error)
         
+        page_num = int(request.GET.get('page'))
+        is_failure = brands_search_not_found
+
+        if request.GET.get('search',None) != None:
+            brands = PCModel.Brand.objects.filter(name__icontains=request.GET.get('search',None), is_show=True)
+        else:
+            brands = PCModel.Brand.objects.filter(is_show=True)
+
+        #To check for active filter 0:False and 1:True
+        if request.GET.get('active',None) != None:
+
+            if request.GET.get('active',None) == '1':
+                brands = brands.filter(is_active=True)
+                is_failure = brands_active_not_found
+            elif request.GET.get('active',None) == '0':
+                brands = brands.filter(is_active=False)
+                is_failure = brands_in_active_not_found
+                    
+        #To check for total number of brands object
         if brands.count() == 0:
             failed_response_map['error'] = is_failure
             return Response(failed_response_map, status=status.HTTP_200_OK)
 
         serializer = self.get_serializer(brands, many=True)
-        response_map['data'] = serializer.data
+        from_range = 1 if page_num == 1 else ((page_num-1)*5)+1
+        to_range = (page_num)*5 if (page_num)*5 < brands.count() else brands.count()
+        response_map['data'] = {
+            'pages' : math.ceil(brands.count()/5),
+            'message' : f'Showing list of brands from {from_range} to {to_range} out of {brands.count()}',
+            'results' : serializer.data[(page_num-1)*5: (page_num)*5],
+        }
         return Response(response_map, status=status.HTTP_200_OK)
 
 
@@ -120,12 +129,13 @@ class AddProductAPIView(generics.CreateAPIView, PermissionRequiredMixin):
             if products.count() != 0 :
                 serializer = PCSerializer.ProductListSerializer(products, many=True)
                 response_map['data'] = serializer.data
+                
                 return Response(response_map, status=status.HTTP_200_OK)
                 
         return super().post(request, *args, **kwargs)
 
 
-class ProductListAPIView(generics.ListAPIView, PermissionRequiredMixin):
+class BrandProductListAPIView(generics.ListAPIView, PermissionRequiredMixin):
     serializer_class = PCSerializer.ProductListSerializer
     permission_classes = [IsAuthenticated]
 
@@ -133,22 +143,42 @@ class ProductListAPIView(generics.ListAPIView, PermissionRequiredMixin):
         try:
             brand = PCModel.Brand.objects.get(id=kwargs['brandid'])
         except PCModel.Brand.DoesNotExist:
-            failed_response_map['error'] = is_error
-            return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+            error_response(is_error)
         
-        if request.GET.get('q',None) == '1':
-            products = PCModel.Product.objects.filter(is_active=True, brand=brand)
-            is_failure = products_active_not_found
-        elif request.GET.get('q',None) == '0':
-            products = PCModel.Product.objects.filter(is_active=False, brand=brand)
-            is_failure = products_in_active_not_found
+        if len(re.findall("\d",request.GET.get('page'))) == 0 or int(request.GET.get('page')) == 0:
+            return error_response(is_error)
+        
+        page_num = int(request.GET.get('page'))
+        is_failure = product_search_brand_not_found
 
+        if request.GET.get('search',None) != None:
+            products = PCModel.Product.objects.filter(brand=brand, name__icontains=request.GET.get('search',None))
+        else:
+            products = PCModel.Product.objects.filter(brand=brand)
+
+        #To check for active filter 0:False and 1:True
+        if request.GET.get('active',None) != None:
+
+            if request.GET.get('active',None) == '1':
+                products = products.filter(is_active=True)
+                is_failure = products_active_not_found
+            elif request.GET.get('active',None) == '0':
+                products = products.filter(is_active=False)
+                is_failure = products_in_active_not_found
+        
+        #To check for total number of brands object
         if products.count() == 0:
                 failed_response_map['error'] = is_failure
                 return Response(failed_response_map, status=status.HTTP_200_OK)
 
         serializer = self.get_serializer(products, many=True)
-        response_map['data'] = serializer.data
+        from_range = 1 if page_num == 1 else ((page_num-1)*5)+1
+        to_range = (page_num)*5 if (page_num)*5 < products.count() else products.count()
+        response_map['data'] = {
+            'pages' : math.ceil(products.count()/5),
+            'message' : f'Showing list of {brand.name} products from {from_range} to {to_range} out of {products.count()}',
+            'results' : serializer.data[(page_num-1)*5: (page_num)*5],
+        }
         return Response(response_map, status=status.HTTP_200_OK)
 
 
