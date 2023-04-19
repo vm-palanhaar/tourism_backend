@@ -38,6 +38,8 @@ products_in_active_not_found = 'Products not registered or verification complete
 product_delete_not_applicable = 'Product deletion not allowed!'
 product_update_not_applicable = 'Product modification not allowed!'
 
+product_sub_group_not_found = 'Products do not exist in this sub-group!'
+
 
 def error_response(error):
     failed_response_map['error'] = error
@@ -221,3 +223,42 @@ class ProductAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
         
         product.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ProductGroupListAPIView(generics.ListAPIView):
+    serializer_class = PCSerializer.ProductGroupListSerializer
+
+    def get(self, request, *args, **kwargs):
+        try:
+            brand = PCModel.Brand.objects.get(id=kwargs['brandid'])
+        except PCModel.Brand.DoesNotExist:
+            return error_response(is_error)
+        
+        groups = PCModel.ProductGroup.objects.filter(brand=brand)
+        serializer = self.get_serializer(groups, many=True)
+        response_map['data'] = {
+            "brand" : brand.name,
+            "results" : serializer.data,
+        }
+        return Response(response_map)
+
+
+class ProductSubGroupAPIView(generics.RetrieveAPIView):
+    serializer_class = PCSerializer.ProductSubGroupSerializer
+
+    def get(self, request, *args, **kwargs):
+        try:
+            brand = PCModel.Brand.objects.get(id=kwargs['brandid'])
+        except PCModel.Brand.DoesNotExist:
+            return error_response(is_error)
+
+        try:
+            subgroup = PCModel.ProductSubGroup.objects.get(id=kwargs['subgroupid'])
+        except PCModel.ProductSubGroup.DoesNotExist:
+            return error_response(is_error)
+
+        if subgroup.products.count() == 0:
+            return error_response(product_sub_group_not_found)
+        serializer = self.get_serializer(subgroup)
+        response_map['data'] = serializer.data
+        return Response(response_map)

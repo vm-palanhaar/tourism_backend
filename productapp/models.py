@@ -40,6 +40,7 @@ class Product(TimestampModel):
     name = models.CharField(max_length=30, verbose_name='Product')
     description = models.TextField(blank=True, null=True, verbose_name='Description')
     price = models.DecimalField(decimal_places=2,max_digits=5, verbose_name='Price')
+    weight = models.CharField(max_length=15, verbose_name='Net Weight')
     image = models.ImageField(_('Image'), upload_to=upload_to_product_image_primary)
     category = models.ForeignKey(ProductCategory, on_delete=models.CASCADE, related_name='productcatagoryprod', verbose_name='Category')
     is_active = models.BooleanField(default=False, verbose_name='Verified')
@@ -59,3 +60,17 @@ class ProductImage(TimestampModel):
     image = models.ImageField(_('Image'), upload_to=upload_to_product_image)
     def __str__(self):
         return self.product.brand.name + ' ' + self.product.name
+
+
+class ProductGroup(models.Model):
+    name = models.CharField(max_length=30, verbose_name='Group')
+    brand = models.ForeignKey(Brand, on_delete=models.CASCADE, related_name='groupbrandprod', verbose_name='Brand')
+    def __str__(self):
+        return f'{self.brand.name} ({self.name})'
+    
+class ProductSubGroup(models.Model):
+    group = models.ForeignKey(ProductGroup, on_delete=models.CASCADE, related_name='subgroupbrandprod', verbose_name='Group')
+    name = models.CharField(max_length=30, verbose_name='Sub-Group')
+    products = models.ManyToManyField(Product, null=True, blank=True)
+    def __str__(self):
+        return self.name
