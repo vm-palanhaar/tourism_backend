@@ -12,7 +12,7 @@ env = environ.Env(
 
 environ.Env.read_env(os.path.join(BASE_DIR,'.env'))
 
-ALLOWED_HOSTS = ['192.168.29.176','127.0.0.1','192.168.42.199']
+ALLOWED_HOSTS = ['192.168.29.176','127.0.0.1','192.168.29.176','localhost']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -74,7 +74,7 @@ REST_FRAMEWORK = {
 
     'DEFAULT_THROTTLE_RATES': {
         'anon' : '51/day',
-        'user' : '500/day'
+        'user' : '10000/day'
     }
 }
 

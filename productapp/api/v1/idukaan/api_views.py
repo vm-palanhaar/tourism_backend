@@ -92,12 +92,13 @@ class BrandListAPIView(generics.ListAPIView, PermissionRequiredMixin):
             return Response(failed_response_map, status=status.HTTP_200_OK)
 
         serializer = self.get_serializer(brands, many=True)
-        from_range = 1 if page_num == 1 else ((page_num-1)*5)+1
-        to_range = (page_num)*5 if (page_num)*5 < brands.count() else brands.count()
+        from_range = 1 if page_num == 1 else ((page_num-1)*15)+1
+        to_range = (page_num)*15 if (page_num)*15 < brands.count() else brands.count()
         response_map['data'] = {
-            'pages' : math.ceil(brands.count()/5),
+            'pages' : math.ceil(brands.count()/15),
             'message' : f'Showing list of brands from {from_range} to {to_range} out of {brands.count()}',
-            'results' : serializer.data[(page_num-1)*5: (page_num)*5],
+            'alert' : None if to_range!=brands.count() else 'No more brands to show',
+            'results' : serializer.data[(page_num-1)*15: (page_num)*15],
         }
         return Response(response_map, status=status.HTTP_200_OK)
 
@@ -177,6 +178,7 @@ class BrandProductListAPIView(generics.ListAPIView, PermissionRequiredMixin):
         response_map['data'] = {
             'pages' : math.ceil(products.count()/5),
             'message' : f'Showing list of {brand.name} products from {from_range} to {to_range} out of {products.count()}',
+            'alert' : None if to_range!=products.count() else 'No more products to show',
             'results' : serializer.data[(page_num-1)*5: (page_num)*5],
         }
         return Response(response_map, status=status.HTTP_200_OK)
