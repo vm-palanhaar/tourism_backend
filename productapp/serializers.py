@@ -115,13 +115,3 @@ class ProductGroupListSerializer(serializers.ModelSerializer):
     def get_subgroups(self, instance):
         subgroups = models.ProductSubGroup.objects.filter(group=instance)
         return ProductSubGroupListSerializer(subgroups, many=True).data
-
-
-class ProductSubGroupSerializer(serializers.ModelSerializer):
-    products = serializers.SerializerMethodField()
-    class Meta:
-        model = models.ProductSubGroup
-        fields = ['name','products']
-
-    def get_products(self, instance):
-        return ProductListSerializer(instance.products, many=True).data
