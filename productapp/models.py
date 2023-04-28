@@ -16,7 +16,7 @@ def upload_to_brand_image(instance,filename):
 
 class Brand(TimestampModel):
     name = models.CharField(max_length=30, verbose_name='Brand')
-    image = models.FileField(_('Image'), upload_to=upload_to_brand_image, null=True, blank=True)
+    image = models.ImageField(_('Image'), upload_to=upload_to_brand_image, null=True, blank=True)
     is_active = models.BooleanField(default=False, verbose_name='Active')
     is_show = models.BooleanField(default=True, verbose_name='Show Brand in Product Catalog')
     def __str__(self):
