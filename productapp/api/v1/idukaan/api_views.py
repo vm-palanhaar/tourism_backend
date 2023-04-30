@@ -38,6 +38,8 @@ products_in_active_not_found = 'Products not registered or verification complete
 product_delete_not_applicable = 'Product deletion not allowed!'
 product_update_not_applicable = 'Product modification not allowed!'
 
+product_sub_group_not_found = 'Products do not exist in this sub-group!'
+
 
 def error_response(error):
     failed_response_map['error'] = error
@@ -166,6 +168,12 @@ class BrandProductListAPIView(generics.ListAPIView, PermissionRequiredMixin):
             elif request.GET.get('active',None) == '0':
                 products = products.filter(is_active=False)
                 is_failure = products_in_active_not_found
+
+        if request.GET.get('subgroup',None) != None:
+            try:
+                products = PCModel.ProductSubGroup.objects.get(id=request.GET.get('subgroup',None)).products
+            except PCModel.ProductSubGroup.DoesNotExist:
+                return error_response(is_error)
         
         #To check for total number of brands object
         if products.count() == 0:
@@ -173,13 +181,13 @@ class BrandProductListAPIView(generics.ListAPIView, PermissionRequiredMixin):
                 return Response(failed_response_map, status=status.HTTP_200_OK)
 
         serializer = self.get_serializer(products, many=True)
-        from_range = 1 if page_num == 1 else ((page_num-1)*5)+1
-        to_range = (page_num)*5 if (page_num)*5 < products.count() else products.count()
+        from_range = 1 if page_num == 1 else ((page_num-1)*15)+1
+        to_range = (page_num)*15 if (page_num)*15 < products.count() else products.count()
         response_map['data'] = {
-            'pages' : math.ceil(products.count()/5),
+            'pages' : math.ceil(products.count()/15),
             'message' : f'Showing list of {brand.name} products from {from_range} to {to_range} out of {products.count()}',
             'alert' : None if to_range!=products.count() else 'No more products to show',
-            'results' : serializer.data[(page_num-1)*5: (page_num)*5],
+            'results' : serializer.data[(page_num-1)*15: (page_num)*15],
         }
         return Response(response_map, status=status.HTTP_200_OK)
 
@@ -221,3 +229,21 @@ class ProductAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
         
         product.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ProductGroupListAPIView(generics.ListAPIView):
+    serializer_class = PCSerializer.ProductGroupListSerializer
+
+    def get(self, request, *args, **kwargs):
+        try:
+            brand = PCModel.Brand.objects.get(id=kwargs['brandid'])
+        except PCModel.Brand.DoesNotExist:
+            return error_response(is_error)
+        
+        groups = PCModel.ProductGroup.objects.filter(brand=brand)
+        serializer = self.get_serializer(groups, many=True)
+        response_map['data'] = {
+            "brand" : brand.name,
+            "results" : serializer.data,
+        }
+        return Response(response_map)

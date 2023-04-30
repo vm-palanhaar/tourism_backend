@@ -23,7 +23,7 @@ class ProductSerializer(serializers.ModelSerializer):
     images = serializers.SerializerMethodField()
     class Meta:
         model = models.Product
-        fields = ('id','brand','name','image','images','description','price','category')
+        fields = ('id','brand','name','image','images','description','price','category','weight')
 
     def get_images(self, instance):
         images = ProductImageSerializer(models.ProductImage.objects.filter(product=instance), many=True).data
@@ -63,7 +63,7 @@ class AddProductSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(required=False, allow_null=True, many=True)
     class Meta:
         model = models.Product
-        fields = ('id','brand','name','image','description','price','category','images','confirm')
+        fields = ('id','brand','name','image','description','price','category','images','confirm','weight')
 
     def create(self, validated_data):
         try:
@@ -83,7 +83,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     brand = serializers.SerializerMethodField()
     class Meta:
         model = models.Product
-        fields = ('id','brand','name','image','price','category','is_active')
+        fields = ('id','brand','name','image','price','category','is_active','weight')
 
     def get_brand(self, instance):
         if instance.brand.is_show == False:
@@ -97,4 +97,21 @@ class PatchProductSerializer(serializers.ModelSerializer):
     description = serializers.CharField(required=False)
     class Meta:
         model = models.Product
-        fields = ('id','image','price','description')
+        fields = ('id','image','price','description','weight')
+
+
+class ProductSubGroupListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.ProductSubGroup
+        fields = ['name','id']
+
+
+class ProductGroupListSerializer(serializers.ModelSerializer):
+    subgroups = serializers.SerializerMethodField()
+    class Meta:
+        model = models.ProductGroup
+        fields = ['name','subgroups']
+
+    def get_subgroups(self, instance):
+        subgroups = models.ProductSubGroup.objects.filter(group=instance)
+        return ProductSubGroupListSerializer(subgroups, many=True).data

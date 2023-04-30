@@ -373,8 +373,8 @@ class AddShopInventoryAPIView(generics.CreateAPIView, PermissionRequiredMixin):
             except PcModel.Product.DoesNotExist:
                 return error_response(product_not_found)
             
-            if product.is_active == False and product.brand.is_show == True:
-                return error_response(product_not_found)
+            # if product.is_active == False and product.brand.is_show == True:
+            #     return error_response(product_not_found)
             
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid():
