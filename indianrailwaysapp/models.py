@@ -146,3 +146,26 @@ class IrGRP(models.Model):
     whatsapp = models.CharField(max_length=15, blank=True, null=True, verbose_name='WhatsApp')
     def __str__(self) :
         return self.state.name
+
+
+class Train(models.Model):
+    train_no = models.IntegerField(max_length=5, verbose_name='Train No')
+    train_name = models.CharField(max_length=60, verbose_name='Train Name')
+    def __str__(self):
+        return f'{self.train_no} - {self.train_name}'
+
+
+class TrainSchedule(models.Model):
+    train = models.ForeignKey(Train, on_delete=models.CASCADE, verbose_name='Train')
+    seq = models.IntegerField(max_length=2, verbose_name='Station No.')
+    station = models.ForeignKey(RailwayStation, on_delete=models.CASCADE, verbose_name='Station')
+    platform = models.CharField(max_length=15, blank=True, null=True, verbose_name='Platform')
+    dep_time = models.TimeField(null=True, blank=True, verbose_name='Departure Time')
+    arv_time = models.TimeField(null=True, blank=True, verbose_name='Arrival Time')
+    src_stn = models.BooleanField(default=False, verbose_name='Source Station')
+    dst_stn = models.BooleanField(default=False, verbose_name='Destination Station')
+    rev_dir = models.BooleanField(default=False, verbose_name='Reverse Direction')
+    def __str__(self):
+        return self.station.name
+
+
