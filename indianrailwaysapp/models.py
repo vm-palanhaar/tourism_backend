@@ -30,8 +30,9 @@ class RailwayStation(models.Model):
     category = models.ForeignKey(RailwayStationCategoy, on_delete=models.CASCADE, verbose_name='Railway Station Category')
     code = models.CharField(max_length=5, primary_key=True, verbose_name='Station Code')
     name = models.CharField(max_length=30,  verbose_name='Railway Station')
+    platforms = models.CharField(max_length=6, blank=True, null=True, verbose_name='Platform')
     def __str__(self):
-        return self.name
+        return f'{self.name} - {self.code}'
     
 
 class TimestampModel(models.Model):
@@ -70,8 +71,8 @@ class Shop(TimestampModel):
     station = models.ForeignKey(RailwayStation, on_delete=models.CASCADE, verbose_name='Railway Station')
     lat = models.CharField(max_length=60, verbose_name='Latitdue')
     lon = models.CharField(max_length=60, verbose_name='Longitude')
-    platform_a = models.CharField(max_length=15, blank=True, null=True, verbose_name='Primary Platform')
-    platform_b = models.CharField(max_length=15, blank=True, null=True, verbose_name='Secondary Platform')
+    platform_a = models.CharField(max_length=6, blank=True, null=True, verbose_name='Primary Platform')
+    platform_b = models.CharField(max_length=6, blank=True, null=True, verbose_name='Secondary Platform')
     is_open = models.BooleanField(default=False, verbose_name='Open')
     is_active = models.BooleanField(default=False, verbose_name='Verified')
     #Payment Methods
@@ -157,15 +158,16 @@ class Train(models.Model):
 
 class TrainSchedule(models.Model):
     train = models.ForeignKey(Train, on_delete=models.CASCADE, verbose_name='Train')
-    seq = models.IntegerField(max_length=2, verbose_name='Station No.')
+    seq = models.IntegerField(max_length=2, verbose_name='Station No')
+    day = models.IntegerField(max_length=2, verbose_name='Day')
     station = models.ForeignKey(RailwayStation, on_delete=models.CASCADE, verbose_name='Station')
-    platform = models.CharField(max_length=15, blank=True, null=True, verbose_name='Platform')
+    platform = models.CharField(max_length=6, blank=True, null=True, verbose_name='Platform')
     dep_time = models.TimeField(null=True, blank=True, verbose_name='Departure Time')
     arv_time = models.TimeField(null=True, blank=True, verbose_name='Arrival Time')
     src_stn = models.BooleanField(default=False, verbose_name='Source Station')
     dst_stn = models.BooleanField(default=False, verbose_name='Destination Station')
     rev_dir = models.BooleanField(default=False, verbose_name='Reverse Direction')
     def __str__(self):
-        return self.station.name
+        return f'{self.station.name} - {self.station.code}'
 
 
