@@ -16,6 +16,14 @@ DEV
 response_map = {"data":None}
 failed_response_map = {'error':None}
 
+is_error = 'Something went wrong. Issue reported to Team and your account will be de-activated.'
+
+train_not_found = 'Train not available!'
+
+def error_response(error):
+    failed_response_map['error'] = error
+    return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+
 
 class RailwayStationListAPIView(generics.GenericAPIView):
     serializer_class = IRSerializer.RailwayStationListSerializer
@@ -55,3 +63,49 @@ class IrGRPStateAPIView(generics.ListAPIView):
             return Response(response_map, status=status.HTTP_200_OK)
         failed_response_map['data'] = GeoV1.reverse_geocoding_bad_request
         return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class TrainListAPIView(generics.ListAPIView):
+    serializer_class = IRSerializer.TrainListSerializer
+
+    def get(self, request, *args, **kwargs):
+        trains = IRModel.Train.objects.all()
+        serializer = self.get_serializer(trains, many=True)
+        response_map['data'] = serializer.data
+        return Response(response_map)
+    
+
+class TrainScheduleAPIView(generics.GenericAPIView):
+    serializer_class = IRSerializer.TrainScheduleSerializer
+
+    def get(self, request, *args, **kwargs):
+        if request.headers['train'] == None:
+            return error_response(is_error)
+        
+        try:
+            train = IRModel.Train.objects.get(train_no=request.headers['train'])
+        except IRModel.Train.DoesNotExist:
+            return error_response(train_not_found)
+        
+        serializers = self.get_serializer(train)
+        response_map['data'] = serializers.data
+        return Response(response_map)
+
+
+class TrainStationListAPIView(generics.ListAPIView):
+    serializer_class = IRSerializer.TrainStationListSerializer
+
+    def get(self, request, *args, **kwargs):
+        if request.headers['train'] == None:
+            return error_response(is_error)
+        
+        try:
+            train = IRModel.Train.objects.get(train_no=request.headers['train'])
+        except IRModel.Train.DoesNotExist:
+            return error_response(train_not_found)
+        
+        serializer = self.get_serializer(train)
+        response_map['data'] = serializer.data
+        return Response(response_map)
+
+

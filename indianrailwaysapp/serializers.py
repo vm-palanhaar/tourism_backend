@@ -303,3 +303,116 @@ class ShopGstSerializer_iDukaan(serializers.ModelSerializer):
 
     def get_shop(self, instance):
         return f'{instance.shop.id}'
+    
+
+class TrainListSerializer(serializers.ModelSerializer):
+    train = serializers.SerializerMethodField()
+    class Meta:
+        model = models.Train
+        fields = ['train']
+
+    def get_train(self, instance):
+        return f'{instance.train_no} - {instance.train_name}'
+
+
+class TrainScheduleStationSerializer(serializers.ModelSerializer):
+    station = serializers.SerializerMethodField()
+    class Meta:
+        model = models.TrainSchedule
+        exclude = ['id','seq','train']
+    
+    def get_station(self, instance):
+        return f'{instance.station.name}'
+    
+
+class TrainScheduleSerializer(serializers.ModelSerializer):
+    station_from = serializers.SerializerMethodField()
+    station_to = serializers.SerializerMethodField()
+    stations = serializers.SerializerMethodField()
+    run_status = serializers.SerializerMethodField()
+    class Meta:
+        model = models.Train
+        fields = ['train_no','train_name','station_from','station_to'
+                  ,'stations','run_status','duration']
+        
+    def get_station_from(self, instance):
+        return f'{instance.station_from.name}'
+    
+    def get_station_to(self, instance):
+        return f'{instance.station_to.name}'
+
+    def get_stations(self, instance):
+        schedule = models.TrainSchedule.objects.filter(train=instance)
+        serializer = TrainScheduleStationSerializer(schedule, many=True)
+        return serializer.data
+    
+    def get_run_status(self, instance):
+        days = []
+        if instance.run_sun:
+            days.append('SUN')
+        if instance.run_mon:
+            days.append('MON')
+        if instance.run_tue:
+            days.append('TUE')
+        if instance.run_wed:
+            days.append('WED')
+        if instance.run_thu:
+            days.append('THU')
+        if instance.run_fri:
+            days.append('FRi')
+        if instance.run_sat:
+            days.append('SAT')
+        return days
+
+
+class TrainScheduleStationListSerializer(serializers.ModelSerializer):
+    station = serializers.SerializerMethodField()
+    class Meta:
+        model = models.TrainSchedule
+        fields = ['station']
+
+    def get_station(self, instance):
+        return f'{instance.station.name} - {instance.station.code}'
+
+
+class TrainStationListSerializer(serializers.ModelSerializer):
+    station_from = serializers.SerializerMethodField()
+    station_to = serializers.SerializerMethodField()
+    stations = serializers.SerializerMethodField()
+    run_status = serializers.SerializerMethodField()
+    class Meta:
+        model = models.Train
+        fields = ['train_no','train_name','station_from','station_to'
+                  ,'stations','run_status','duration']
+        
+    def get_station_from(self, instance):
+        return f'{instance.station_from.name}'
+    
+    def get_station_to(self, instance):
+        return f'{instance.station_to.name}'
+
+    def get_stations(self, instance):
+        schedule = models.TrainSchedule.objects.filter(train=instance)
+        serializer = TrainScheduleStationListSerializer(schedule, many=True)
+        list = []
+        for station in serializer.data:
+            list.append(station['station'])
+        return list
+    
+    def get_run_status(self, instance):
+        days = []
+        if instance.run_sun:
+            days.append('SUN')
+        if instance.run_mon:
+            days.append('MON')
+        if instance.run_tue:
+            days.append('TUE')
+        if instance.run_wed:
+            days.append('WED')
+        if instance.run_thu:
+            days.append('THU')
+        if instance.run_fri:
+            days.append('FRi')
+        if instance.run_sat:
+            days.append('SAT')
+        return days
