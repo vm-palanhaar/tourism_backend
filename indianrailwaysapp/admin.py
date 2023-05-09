@@ -99,3 +99,5 @@ class ShopConfig(admin.ModelAdmin):
 # Helpine Numbers
 
 admin.site.register(models.IrGRP)
+admin.site.register(models.Train)
+admin.site.register(models.TrainSchedule)

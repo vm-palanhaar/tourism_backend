@@ -25,12 +25,12 @@ class RailwayStationCategoy(models.Model):
         return self.category
     
 class RailwayStation(models.Model):
-    zone = models.ForeignKey(RailwayZone, on_delete=models.CASCADE, verbose_name='Railway Zone')
-    division = models.ForeignKey(RailwayDivision, on_delete=models.CASCADE, verbose_name='Railway Division')
-    category = models.ForeignKey(RailwayStationCategoy, on_delete=models.CASCADE, verbose_name='Railway Station Category')
+    zone = models.ForeignKey(RailwayZone, blank=True, null=True, on_delete=models.CASCADE, verbose_name='Railway Zone')
+    division = models.ForeignKey(RailwayDivision, blank=True, null=True, on_delete=models.CASCADE, verbose_name='Railway Division')
+    category = models.ForeignKey(RailwayStationCategoy, blank=True, null=True, on_delete=models.CASCADE, verbose_name='Railway Station Category')
     code = models.CharField(max_length=5, primary_key=True, verbose_name='Station Code')
-    name = models.CharField(max_length=30,  verbose_name='Railway Station')
-    platforms = models.CharField(max_length=6, blank=True, null=True, verbose_name='Platform')
+    name = models.CharField(max_length=60,  verbose_name='Railway Station')
+    platforms = models.CharField(max_length=15, blank=True, null=True, verbose_name='Platform')
     def __str__(self):
         return f'{self.name} - {self.code}'
     
@@ -71,8 +71,8 @@ class Shop(TimestampModel):
     station = models.ForeignKey(RailwayStation, on_delete=models.CASCADE, verbose_name='Railway Station')
     lat = models.CharField(max_length=60, verbose_name='Latitdue')
     lon = models.CharField(max_length=60, verbose_name='Longitude')
-    platform_a = models.CharField(max_length=6, blank=True, null=True, verbose_name='Primary Platform')
-    platform_b = models.CharField(max_length=6, blank=True, null=True, verbose_name='Secondary Platform')
+    platform_a = models.CharField(max_length=15, blank=True, null=True, verbose_name='Primary Platform')
+    platform_b = models.CharField(max_length=15, blank=True, null=True, verbose_name='Secondary Platform')
     is_open = models.BooleanField(default=False, verbose_name='Open')
     is_active = models.BooleanField(default=False, verbose_name='Verified')
     #Payment Methods
@@ -150,22 +150,33 @@ class IrGRP(models.Model):
 
 
 class Train(models.Model):
-    train_no = models.IntegerField(max_length=5, verbose_name='Train No')
+    train_no = models.IntegerField(verbose_name='Train No', primary_key=True)
     train_name = models.CharField(max_length=60, verbose_name='Train Name')
+    station_from = models.ForeignKey(RailwayStation, on_delete=models.CASCADE, verbose_name='Station From', related_name='train_station_from')
+    station_to = models.ForeignKey(RailwayStation, on_delete=models.CASCADE, verbose_name='Station To', related_name='train_station_to')
+    run_sun = models.BooleanField(default=False, verbose_name='Train runs on Sunday')
+    run_mon = models.BooleanField(default=False, verbose_name='Train runs on Monday')
+    run_tue = models.BooleanField(default=False, verbose_name='Train runs on Tuesday')
+    run_wed = models.BooleanField(default=False, verbose_name='Train runs on Wednesday')
+    run_thu = models.BooleanField(default=False, verbose_name='Train runs on Thursday')
+    run_fri = models.BooleanField(default=False, verbose_name='Train runs on Friday')
+    run_sat = models.BooleanField(default=False, verbose_name='Train runs on Saturday')
+    run_daily = models.BooleanField(default=False, verbose_name='Train runs Daily')
+    duration = models.CharField(max_length=15, null=True, blank=True, verbose_name='Duration')
     def __str__(self):
         return f'{self.train_no} - {self.train_name}'
 
 
 class TrainSchedule(models.Model):
     train = models.ForeignKey(Train, on_delete=models.CASCADE, verbose_name='Train')
-    seq = models.IntegerField(max_length=2, verbose_name='Station No')
-    day = models.IntegerField(max_length=2, verbose_name='Day')
+    seq = models.IntegerField(verbose_name='Station No')
+    day = models.IntegerField(verbose_name='Day')
+    distance = models.IntegerField(verbose_name='Distance (in KM)')
     station = models.ForeignKey(RailwayStation, on_delete=models.CASCADE, verbose_name='Station')
-    platform = models.CharField(max_length=6, blank=True, null=True, verbose_name='Platform')
+    platform = models.CharField(max_length=15, blank=True, null=True, verbose_name='Platform')
     dep_time = models.TimeField(null=True, blank=True, verbose_name='Departure Time')
     arv_time = models.TimeField(null=True, blank=True, verbose_name='Arrival Time')
-    src_stn = models.BooleanField(default=False, verbose_name='Source Station')
-    dst_stn = models.BooleanField(default=False, verbose_name='Destination Station')
+    halt_time = models.TimeField(null=True, blank=True, verbose_name='Halt Time')
     rev_dir = models.BooleanField(default=False, verbose_name='Reverse Direction')
     def __str__(self):
         return f'{self.station.name} - {self.station.code}'
