@@ -45,6 +45,7 @@ class ShopAdmin(admin.TabularInline):
     fields = ['name','platform_a','platform_b','is_open','is_active']
     extra = 0
 
+
 @admin.register(models.RailwayStation)
 class RailwayStationConfig(admin.ModelAdmin):
     search_fields = ['code','name','zone__name','division__name']
@@ -97,7 +98,19 @@ class ShopConfig(admin.ModelAdmin):
 
 
 # Helpine Numbers
-
 admin.site.register(models.IrGRP)
-admin.site.register(models.Train)
-admin.site.register(models.TrainSchedule)
+
+class TrainScheduleAdmin(admin.TabularInline):
+    model = models.TrainSchedule
+    raw_id_fields = ['station']
+    extra = 0
+
+@admin.register(models.Train)
+class TrainConfig(admin.ModelAdmin):
+    fieldsets = (
+        ('TRAIN', {'fields':('train_no','train_name')}),
+        ('STATION', {'fields':('station_from','station_to','duration')}),
+        ('RUN', {'fields':('run_sun','run_mon','run_tue','run_wed','run_thu','run_fri','run_sat','run_daily')}),
+    )
+    raw_id_fields = ['station_from','station_to']
+    inlines = [TrainScheduleAdmin]

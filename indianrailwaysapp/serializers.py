@@ -36,9 +36,13 @@ iDukaan APIs Serializer
 
 #Common
 class RailwayStationListSerializer(serializers.ModelSerializer):
+    station = serializers.SerializerMethodField()
     class Meta:
         model = models.RailwayStation
-        fields = ['code','name']
+        fields = ['station']
+
+    def get_station(self, instance):
+        return f'{instance.name} - {instance.code}'
 
 
 #Common

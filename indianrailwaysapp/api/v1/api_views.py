@@ -1,3 +1,5 @@
+import time
+
 from rest_framework import generics, status
 from rest_framework.response import Response
 
@@ -31,7 +33,13 @@ class RailwayStationListAPIView(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         stations = IRModel.RailwayStation.objects.all()
         serializer = self.get_serializer(stations, many=True)
-        response_map["data"] = serializer.data
+        stations = []
+        for station in serializer.data:
+            stations.append(station['station'])
+        response_map["data"] = {
+            "total" : len(stations),
+            "stations" : stations,
+        }
         return Response(response_map, status=status.HTTP_200_OK)
     
 
@@ -71,7 +79,13 @@ class TrainListAPIView(generics.ListAPIView):
     def get(self, request, *args, **kwargs):
         trains = IRModel.Train.objects.all()
         serializer = self.get_serializer(trains, many=True)
-        response_map['data'] = serializer.data
+        trains = []
+        for station in serializer.data:
+            trains.append(station['train'])
+        response_map["data"] = {
+            "total" : len(trains),
+            "trains" : trains,
+        }
         return Response(response_map)
     
 
