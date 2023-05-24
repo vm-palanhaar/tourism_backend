@@ -4,6 +4,7 @@ from rest_framework import generics, status, viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
+from userapp import permissions as UserPerm
 from businessapp import models as OrgModel
 from userapp import models as UserModel
 from businessapp import serializers as OrgSerializer
@@ -68,7 +69,7 @@ class OrganizationTypeListAPIView(generics.ListAPIView, PermissionRequiredMixin)
 class AddOrganizationAPIView(generics.CreateAPIView, PermissionRequiredMixin):
     queryset = OrgModel.Organization.objects.all()
     serializer_class = OrgSerializer.AddOrganizationSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def post(self, request, *args, **kwargs):
         try:
@@ -85,7 +86,7 @@ class AddOrganizationAPIView(generics.CreateAPIView, PermissionRequiredMixin):
 
 class OrganizationListAPIView(generics.ListAPIView, PermissionRequiredMixin):
     serializer_class = OrgSerializer.OrganizationListSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def get(self, request, *args, **kwargs):
         queryset = request.user.organizationemployee_set.all()
@@ -101,7 +102,7 @@ class OrganizationListAPIView(generics.ListAPIView, PermissionRequiredMixin):
 
 class OrganizationDetailsAPIView(generics.RetrieveAPIView, PermissionRequiredMixin):
     serializer_class = OrgSerializer.OrganizationSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def get(self, request, *args, **kwargs):
         check = validate_org_emp(request.user, kwargs['orgid'])
@@ -116,7 +117,7 @@ class OrganizationDetailsAPIView(generics.RetrieveAPIView, PermissionRequiredMix
 
 class AddOrganizationEmployeeAPIView(generics.CreateAPIView, PermissionRequiredMixin):
     serializer_class = OrgSerializer.AddOrganizationEmployeeSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def post(self, request, *args, **kwargs):
         check = validate_org_emp(request.user, request.data['organization'])
@@ -144,7 +145,7 @@ class AddOrganizationEmployeeAPIView(generics.CreateAPIView, PermissionRequiredM
 
 class OrganizationEmployeeListAPIView(generics.ListAPIView, PermissionRequiredMixin):
     serializer_class = OrgSerializer.OrganizationEmployeeListSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def get(self, request, *args, **kwargs):
         check = validate_org_emp(request.user, kwargs['orgid'])
@@ -158,7 +159,7 @@ class OrganizationEmployeeListAPIView(generics.ListAPIView, PermissionRequiredMi
 
 
 class OrganizationEmployeeAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def partial_update(self, request, *args, **kwargs):
         check = validate_org_emp(request.user, kwargs['orgid'])
@@ -199,7 +200,7 @@ class OrganizationEmployeeAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
 
 
 class OrgStateGstAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def create(self, request, *args, **kwargs):
         check = validate_org_emp(request.user, kwargs['orgid'])

@@ -15,13 +15,13 @@ org_state_ops_set = API.OrgStateGstAPIViewset.as_view({
 
 urlpatterns = [
     #PROD
-    path('organization/type/', API.OrganizationTypeListAPIView.as_view()),
-    path('organization/', API.AddOrganizationAPIView.as_view()),
-    path('organization/list/', API.OrganizationListAPIView.as_view()),
-    path('organization/<str:orgid>/', API.OrganizationDetailsAPIView.as_view()),
-    path('organization/<str:orgid>/employee/', API.AddOrganizationEmployeeAPIView.as_view()),
-    path('organization/<str:orgid>/employee/list/', API.OrganizationEmployeeListAPIView.as_view()),
-    path('organization/<str:orgid>/employee/<str:empid>/', org_set),
+    path('org/type/', API.OrganizationTypeListAPIView.as_view()),
+    path('org/', API.AddOrganizationAPIView.as_view()),
+    path('org/list/', API.OrganizationListAPIView.as_view()),
+    path('org/<str:orgid>/', API.OrganizationDetailsAPIView.as_view()),
+    path('org/<str:orgid>/emp/', API.AddOrganizationEmployeeAPIView.as_view()),
+    path('org/<str:orgid>/emp/list/', API.OrganizationEmployeeListAPIView.as_view()),
+    path('org/<str:orgid>/emp/<str:empid>/', org_set),
     #DEV
-    path('organization/<str:orgid>/gst/', org_state_ops_set),
+    path('org/<str:orgid>/gst/', org_state_ops_set),
 ]

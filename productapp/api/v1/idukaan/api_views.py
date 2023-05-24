@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status, generics, viewsets
 
+from userapp import permissions as UserPerm
 from productapp import models as PCModel
 from productapp import serializers as PCSerializer
 
@@ -49,7 +50,7 @@ def error_response(error):
 class AddBrandAPIView(generics.CreateAPIView, PermissionRequiredMixin):
     queryset = PCModel.Brand.objects.all()
     serializer_class = PCSerializer.AddBrandSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def post(self, request, *args, **kwargs):
         if request.data['confirm'] == 'false':
@@ -63,7 +64,7 @@ class AddBrandAPIView(generics.CreateAPIView, PermissionRequiredMixin):
 
 class BrandListAPIView(generics.ListAPIView, PermissionRequiredMixin):
     serializer_class = PCSerializer.BrandListSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def get(self, request, *args, **kwargs):
 
@@ -108,12 +109,12 @@ class BrandListAPIView(generics.ListAPIView, PermissionRequiredMixin):
 class ProductCategoryListAPIView(generics.ListAPIView, PermissionRequiredMixin):
     queryset = PCModel.ProductCategory.objects.all()
     serializer_class = PCSerializer.ProductCategoryListSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
 
 class AddProductAPIView(generics.CreateAPIView, PermissionRequiredMixin):
     serializer_class = PCSerializer.AddProductSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def post(self, request, *args, **kwargs):
         if kwargs['brandid'] != request.data['brand']:
@@ -140,7 +141,7 @@ class AddProductAPIView(generics.CreateAPIView, PermissionRequiredMixin):
 
 class BrandProductListAPIView(generics.ListAPIView, PermissionRequiredMixin):
     serializer_class = PCSerializer.ProductListSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def get(self, request, *args, **kwargs):
         try:
@@ -193,7 +194,7 @@ class BrandProductListAPIView(generics.ListAPIView, PermissionRequiredMixin):
 
 
 class ProductAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def partial_update(self, request, *args, **kwargs):
         try:

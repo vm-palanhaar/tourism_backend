@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 
+from userapp import permissions as UserPerm
 from indianrailwaysapp import serializers as ShopSerializer
 from indianrailwaysapp import models as ShopModel
 from businessapp import models as OrgModel
@@ -78,7 +79,7 @@ class ShopBusinessTypeListAPIView(generics.ListAPIView):
 
 class AddShopAPIView(generics.CreateAPIView, PermissionRequiredMixin):
     serializer_class = ShopSerializer.AddShopSerializer_iDukaan
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def post(self, request, *args, **kwargs):
         check = validate_org_emp(request.user, request.data['organization'])
@@ -105,7 +106,7 @@ class AddShopAPIView(generics.CreateAPIView, PermissionRequiredMixin):
 
 class ShopListAPIView(generics.ListAPIView, PermissionRequiredMixin):
     serializer_class = ShopSerializer.ShopListSerializer_iDukaan
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def get(self, request, *args, **kwargs):
         shop_list = []
@@ -124,7 +125,7 @@ class ShopListAPIView(generics.ListAPIView, PermissionRequiredMixin):
 
 class OrgShopListAPIView(generics.ListAPIView, PermissionRequiredMixin):
     serializer_class = ShopSerializer.OrganizationShopListSerializer_iDukaan
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def get(self, request, *args, **kwargs):
         check = validate_org_emp(request.user, kwargs['orgid'])
@@ -161,7 +162,7 @@ class OrgShopListAPIView(generics.ListAPIView, PermissionRequiredMixin):
 
 
 class OrgshopPatchDetailsAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def partial_update(self, request, *args, **kwargs):
         check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])
@@ -200,7 +201,7 @@ class OrgshopPatchDetailsAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
 
 class AddOrgShopEmpAPIView(generics.CreateAPIView, PermissionRequiredMixin):
     serializer_class = ShopSerializer.AddOrgShopEmpSerializer_iDukaan
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def post(self, request, *args, **kwargs):
         check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])
@@ -230,7 +231,7 @@ class AddOrgShopEmpAPIView(generics.CreateAPIView, PermissionRequiredMixin):
 
 
 class OrgShopEmpListAPIView(generics.ListAPIView, PermissionRequiredMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def get(self, request, *args, **kwargs):
         check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])
@@ -244,7 +245,7 @@ class OrgShopEmpListAPIView(generics.ListAPIView, PermissionRequiredMixin):
         
 
 class OrgShopEmpPatchDeleteAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def partial_update(self, request, *args, **kwargs):
         check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])
@@ -285,7 +286,7 @@ class OrgShopEmpPatchDeleteAPIViewset(viewsets.ViewSet, PermissionRequiredMixin)
     
 
 class ShopLicenseAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def create(self, request, *args, **kwargs):
         check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])
@@ -319,7 +320,7 @@ class ShopLicenseAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
 
 
 class ShopFssaiLicenseAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def create(self, request, *args, **kwargs):
         check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])
@@ -354,7 +355,7 @@ class ShopFssaiLicenseAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
 
 class AddShopInventoryAPIView(generics.CreateAPIView, PermissionRequiredMixin):
     serializer_class = ShopSerializer.AddShopInventorySerializer_iDukaan
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def post(self, request, *args, **kwargs):
         check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])
@@ -390,7 +391,7 @@ class AddShopInventoryAPIView(generics.CreateAPIView, PermissionRequiredMixin):
 
 class ShopInventoryListAPIView(generics.ListAPIView, PermissionRequiredMixin):
     serializer_class = ShopSerializer.ShopInventoryListSerializer
-    permission_classes = [IsAuthenticated] 
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified] 
 
     def get(self, request, *args, **kwargs):
         check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])
@@ -416,7 +417,7 @@ class ShopInventoryListAPIView(generics.ListAPIView, PermissionRequiredMixin):
 
 
 class ShopInventoryPatchDeleteAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def partial_update(self, request, *args, **kwargs):
         check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])
@@ -454,7 +455,7 @@ class ShopInventoryPatchDeleteAPIViewset(viewsets.ViewSet, PermissionRequiredMix
 
 
 class ShopGstPostGetAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def create(self, request, *args, **kwargs):
         check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])

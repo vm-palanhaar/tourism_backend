@@ -46,8 +46,8 @@ urlpatterns = [
             path('shop/<str:shopid>/emp/list/', API.OrgShopEmpListAPIView.as_view()),
             path('shop/<str:shopid>/emp/<str:empid>/', org_shop_emp_patch_delete_set),
 
-            path('shop/<str:shopid>/license/', org_shop_license_set),
-            path('shop/<str:shopid>/fssailicense/', org_shop_fssai_license_set),
+            path('shop/<str:shopid>/lic/', org_shop_license_set),
+            path('shop/<str:shopid>/fssai-lic/', org_shop_fssai_license_set),
 
             path('shop/<str:shopid>/inv/', API.AddShopInventoryAPIView.as_view()),
             path('shop/<str:shopid>/inv/stock', API.ShopInventoryListAPIView.as_view()),
