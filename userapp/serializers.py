@@ -12,7 +12,6 @@ from knox.models import AuthToken
 Common APIs Serializer
 1. UserRegisterSerializer
 2. UserLoginSerializer
-3. UserLoginResponseSerializer
 4. UserSerializer
 
 Yatrigan APIs Serializer
@@ -28,8 +27,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserModel.User
         fields = ('username','password','email','first_name','last_name','contact_number')
-
-        #raise serializers.ValidationError({"password": "Password fields didn't match."})
 
     def create(self, validated_data):
         user = UserModel.User.objects.create_user(
@@ -47,7 +44,13 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
 class UserLoginSerializer(serializers.Serializer):
     username = serializers.CharField()
-    password = serializers.CharField()
+    first_name = serializers.CharField(read_only=True)
+    last_name = serializers.CharField(read_only=True)
+    is_verified = serializers.CharField(read_only=True)
+    password = serializers.CharField(write_only=True)
+    class Meta:
+        model = UserModel.User
+        fields = ['username','first_name','last_name','is_verified']
 
     def validate(self, data):
         user = authenticate(**data)
@@ -56,17 +59,7 @@ class UserLoginSerializer(serializers.Serializer):
         raise serializers.ValidationError()
 
 
-class UserLoginResponseSerializer(serializers.ModelSerializer):
-    token = serializers.SerializerMethodField()
-    class Meta:
-        model = UserModel.User
-        fields = ['username','first_name','token','is_verified']
-    
-    def get_token(self, instance): 
-        return AuthToken.objects.create(instance)[1]
-
-
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserModel.User
-        fields = ['first_name','last_name','username','email','contact_number']
+        fields = ['first_name','last_name','username','email','contact_number','is_verified']
