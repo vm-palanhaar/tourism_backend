@@ -2,7 +2,15 @@ from django.urls import path, include
 
 from businessapp.api.v1.idukaan import api_views as API
 
-org_set = API.OrganizationEmployeeAPIViewset.as_view({
+
+org_api_set = API.OrgApi.as_view({
+    'post': 'create',
+    'get': 'list',
+})
+
+org_emp_api_set = API.OrgEmpApi.as_view({
+    'post': 'create',
+    'get': 'list',
     'patch': 'partial_update',
     'delete': 'destroy'
 })
@@ -15,13 +23,9 @@ org_state_ops_set = API.OrgStateGstAPIViewset.as_view({
 
 urlpatterns = [
     #PROD
-    path('org/type/', API.OrganizationTypeListAPIView.as_view()),
-    path('org/', API.AddOrganizationAPIView.as_view()),
-    path('org/list/', API.OrganizationListAPIView.as_view()),
-    path('org/<str:orgid>/', API.OrganizationDetailsAPIView.as_view()),
-    path('org/<str:orgid>/emp/', API.AddOrganizationEmployeeAPIView.as_view()),
-    path('org/<str:orgid>/emp/list/', API.OrganizationEmployeeListAPIView.as_view()),
-    path('org/<str:orgid>/emp/<str:empid>/', org_set),
+    path('type/org/', API.OrgTypesApi.as_view()),
+    path('org/', org_api_set),
+    path('org/<str:orgId>/emp/', org_emp_api_set),
+    path('org/<str:orgId>/gst/', org_state_ops_set),
     #DEV
-    path('org/<str:orgid>/gst/', org_state_ops_set),
 ]

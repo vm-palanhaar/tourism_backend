@@ -15,6 +15,6 @@ urlpatterns = [
     path('brand/<str:brandid>/group/', API.ProductGroupListAPIView.as_view()),
     path('brand/<str:brandid>/product/', API.AddProductAPIView.as_view()),
     path('brand/<str:brandid>/product/list/', API.BrandProductListAPIView.as_view()),
-    path('brand/product/<str:productid>/', product_set),
+    path('product/<str:productid>/', product_set),
     #DEV
 ]

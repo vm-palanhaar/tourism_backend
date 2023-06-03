@@ -48,18 +48,22 @@ class RailwayStationListSerializer(serializers.ModelSerializer):
 #Common
 class ShopInventoryListSerializer(serializers.ModelSerializer):
     id = serializers.CharField()
-    shop = serializers.SerializerMethodField()
     product= serializers.SerializerMethodField()
     class Meta:
         model = models.ShopInventory
-        exclude = ['created_at','updated_at']
-
-    def get_shop(self, instance):
-        return f'{instance.shop.id}'
+        exclude = ['created_at','updated_at','shop']
 
     def get_product(self, instance):
         return PcSerializer.ProductListSerializer(instance.product).data
-    
+
+
+#Common
+class IrHelplineNumberSerializer(serializers.ModelSerializer):
+    id = serializers.CharField()
+    class Meta:
+        model = models.IrHelplineNumber
+        fields = ['id','contact_number','whatsapp','desc','name']
+
 
 #Common
 class IrGRPListSerializer(serializers.ModelSerializer):
@@ -78,7 +82,7 @@ class ShopListSerializer_Yatrigan(serializers.ModelSerializer):
     id = serializers.CharField()
     class Meta:
         model = models.Shop
-        fields = ['id','name','image','station','platform_a','platform_b']
+        fields = ['id','name','image','platform_a','platform_b']
 
 
 #Yatrigan
@@ -98,15 +102,15 @@ class ShopBusinessTypeListSerializer_iDukaan(serializers.ModelSerializer):
 
 #iDukaan
 class AddShopSerializer_iDukaan(serializers.ModelSerializer):
-    id = serializers.IntegerField(required=False, read_only=True)
-    organization = serializers.CharField(required=True)
-    lic_number = serializers.CharField(required=True)
-    lic_cert = serializers.FileField(required=False)
-    lic_start_date = serializers.DateField(required=True)
-    lic_end_date = serializers.DateField(required=True)
+    image = serializers.ImageField(write_only=True)
+    organization = serializers.CharField(required=True, write_only=True)
+    lic_number = serializers.CharField(required=True, write_only=True)
+    lic_cert = serializers.FileField(required=True, write_only=True)
+    lic_start_date = serializers.DateField(required=True, write_only=True)
+    lic_end_date = serializers.DateField(required=True, write_only=True)
     class Meta:
         model = models.Shop
-        fields = '__all__'
+        exclude = ['created_at','updated_at','is_open','is_active','id']
 
     def create(self, validated_data):
         shop = models.Shop.objects.create(
@@ -130,7 +134,7 @@ class AddShopSerializer_iDukaan(serializers.ModelSerializer):
         )
         shop.save()
 
-        shop_license = models.ShopLicense.objects.create(
+        shopLic = models.ShopLicense.objects.create(
             shop = shop,
             registration = validated_data['lic_number'],
             certificate = validated_data['lic_cert'],
@@ -139,23 +143,22 @@ class AddShopSerializer_iDukaan(serializers.ModelSerializer):
             is_current = True,
             is_valid = False
         )
-        shop_license.save()
+        shopLic.save()
 
-        organization = OrgModel.Organization.objects.get(id=validated_data['organization'])
-        organization_shop = models.OrganizationShop.objects.create(
-            organization = organization,
+        org = OrgModel.Organization.objects.get(id=validated_data['organization'])
+        orgShop = models.OrganizationShop.objects.create(
+            organization = org,
             shop = shop
         )
-        organization_shop.save()
+        orgShop.save()
 
-        user = self.context.get('view').request.user
-        organization_shop_employee = models.OrganizationShopEmployee.objects.create(
-            organization = organization,
+        orgShopEmp = models.OrganizationShopEmployee.objects.create(
+            organization = org,
             shop = shop,
-            user = user,
+            user = self.context.get('user'),
             is_manager = True
         )
-        organization_shop_employee.save()
+        orgShopEmp.save()
 
         return shop
 
@@ -326,7 +329,7 @@ class TrainScheduleStationSerializer(serializers.ModelSerializer):
         exclude = ['id','seq','train']
     
     def get_station(self, instance):
-        return f'{instance.station.name}'
+        return f'{instance.station.name} - {instance.station.code}'
     
 
 class TrainScheduleSerializer(serializers.ModelSerializer):
@@ -340,10 +343,10 @@ class TrainScheduleSerializer(serializers.ModelSerializer):
                   ,'stations','run_status','duration']
         
     def get_station_from(self, instance):
-        return f'{instance.station_from.name}'
+        return f'{instance.station_from.name} - {instance.station_from.code}'
     
     def get_station_to(self, instance):
-        return f'{instance.station_to.name}'
+        return f'{instance.station_to.name} - {instance.station_from.code}'
 
     def get_stations(self, instance):
         schedule = models.TrainSchedule.objects.filter(train=instance)
@@ -369,54 +372,3 @@ class TrainScheduleSerializer(serializers.ModelSerializer):
         return days
 
 
-class TrainScheduleStationListSerializer(serializers.ModelSerializer):
-    station = serializers.SerializerMethodField()
-    class Meta:
-        model = models.TrainSchedule
-        fields = ['station']
-
-    def get_station(self, instance):
-        return f'{instance.station.name} - {instance.station.code}'
-
-
-class TrainStationListSerializer(serializers.ModelSerializer):
-    station_from = serializers.SerializerMethodField()
-    station_to = serializers.SerializerMethodField()
-    stations = serializers.SerializerMethodField()
-    run_status = serializers.SerializerMethodField()
-    class Meta:
-        model = models.Train
-        fields = ['train_no','train_name','station_from','station_to'
-                  ,'stations','run_status','duration']
-        
-    def get_station_from(self, instance):
-        return f'{instance.station_from.name}'
-    
-    def get_station_to(self, instance):
-        return f'{instance.station_to.name}'
-
-    def get_stations(self, instance):
-        schedule = models.TrainSchedule.objects.filter(train=instance)
-        serializer = TrainScheduleStationListSerializer(schedule, many=True)
-        list = []
-        for station in serializer.data:
-            list.append(station['station'])
-        return list
-    
-    def get_run_status(self, instance):
-        days = []
-        if instance.run_sun:
-            days.append('SUN')
-        if instance.run_mon:
-            days.append('MON')
-        if instance.run_tue:
-            days.append('TUE')
-        if instance.run_wed:
-            days.append('WED')
-        if instance.run_thu:
-            days.append('THU')
-        if instance.run_fri:
-            days.append('FRi')
-        if instance.run_sat:
-            days.append('SAT')
-        return days

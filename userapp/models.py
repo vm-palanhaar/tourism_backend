@@ -7,8 +7,6 @@ class CustomAccountManager(BaseUserManager):
         other_fields.setdefault('is_staff', True)
         other_fields.setdefault('is_superuser', True)
         other_fields.setdefault('is_active', True)
-        other_fields.setdefault('is_iDukaan', True)
-        other_fields.setdefault('is_Yatrigan', True)
         return self.create_user(email, username, first_name, last_name, contact_number, password, **other_fields)
 
     def create_user(self, email, username, first_name, last_name, contact_number, password=None, **other_fields):

@@ -8,104 +8,105 @@ from indianrailwaysapp import serializers as IRSerializer
 
 '''
 iDukaan APIs Serializer
-1. OrganizationTypeListSerializer
-2. AddOrganizationSerializer
-3. OrganizationListSerializer
-4. OrganizationSerializer
-5. AddOrganizationEmployeeSerializer
-6. UpdateOrganizationEmployeeSerializer
-7. OrganizationEmployeeListSerializer
+1. OrgTypesSerializer
+2. AddOrgSerializer
+3. OrgListSerializer
+4. OrgInfoSerializer
+5. AddOrgEmpSerializer
+6. UpdateOrgEmpSerializer
+7. OrgEmpListSerializer
+8. AddOrgStateGstOpsSerializer
+9. OrgStateGstOpsListSerializer
 '''
 
-class OrganizationTypeListSerializer(serializers.ModelSerializer):
+class OrgTypesSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrgModel.OrganizationType
         fields = '__all__'
 
 
-class AddOrganizationSerializer(serializers.ModelSerializer):
+class AddOrgSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, read_only=True)
+    document = serializers.FileField(write_only=True)
     class Meta:
         model = OrgModel.Organization
-        exclude = ['is_active']
+        exclude = ['is_active','created_at','updated_at']
 
     def create(self, validated_data):
         org = super().create(validated_data)
-        user = self.context.get('view').request.user
         employee = OrgModel.OrganizationEmployee.objects.create(
             organization = org,
-            user = user,
+            user = self.context.get('user'),
             manager = True
         )
         employee.save
         return org
 
 
-class OrganizationListSerializer(serializers.ModelSerializer):
+class OrgListSerializer(serializers.ModelSerializer):
     id = serializers.CharField()
     entity = serializers.CharField()
-    ir_shops = serializers.SerializerMethodField()
+    irShops = serializers.SerializerMethodField()
     class Meta:
         model = OrgModel.Organization
         exclude = ['registration','document','created_at','updated_at']
 
-    def get_ir_shops(self, instance):
+    def get_irShops(self, instance):
         shops = IRModel.OrganizationShop.objects.filter(organization=instance).count()
         return shops
 
 
-class OrganizationSerializer(serializers.ModelSerializer):
+class OrgInfoSerializer(serializers.ModelSerializer):
     id = serializers.CharField()
     entity = serializers.CharField()
-    employees = serializers.SerializerMethodField()
-    ir_shops = serializers.SerializerMethodField()
+    emp = serializers.SerializerMethodField()
+    irShops = serializers.SerializerMethodField()
     class Meta:
         model = OrgModel.Organization
-        fields = ['id','entity','name','employees','ir_shops']
+        fields = ['id','name','entity','emp','irShops']
     
-    def get_employees(self, instance):
+    def get_emp(self, instance):
         return OrgModel.OrganizationEmployee.objects.filter(organization=instance).count()
     
-    def get_ir_shops(self, instance):
+    def get_irShops(self, instance):
         shops = IRModel.OrganizationShop.objects.filter(organization=instance).count()
         return shops
     
 
-class AddOrganizationEmployeeSerializer(serializers.ModelSerializer):
+class AddOrgEmpSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, read_only=True)
     class Meta:
         model = OrgModel.OrganizationEmployee
-        fields = '__all__'
+        exclude = ['created_at','updated_at']
 
 
-class UpdateOrganizationEmployeeSerializer(serializers.ModelSerializer):
+class UpdateOrgEmpSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, read_only=True)
     class Meta:
         model = OrgModel.OrganizationEmployee
         fields = ['id','manager']
 
 
-class OrganizationEmployeeListSerializer(serializers.ModelSerializer):
+class OrgEmpListSerializer(serializers.ModelSerializer):
     id = serializers.CharField()
     name = serializers.SerializerMethodField()
-    organization = serializers.SerializerMethodField()
     class Meta:
         model = OrgModel.OrganizationEmployee
-        exclude = ['user']
+        exclude = ['user','organization','created_at','updated_at']
 
     def get_name(self, instance):
         user = UserModel.User.objects.get(username=instance.user)
         return f'{user.first_name} {user.last_name}'
 
-    def get_organization(self, instance):
-        return f'{instance.organization.id}'
 
 
 class AddOrgStateGstOpsSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, read_only=True)
+    gstin = serializers.CharField(required=True)
+    doc = serializers.FileField(write_only=True)
     class Meta:
         model = OrgModel.OrgStateGstOps
-        fields = '__all__'
+        exclude = ['created_at','updated_at','is_active','is_valid']
 
 
 class OrgStateGstOpsListSerializer(serializers.ModelSerializer):

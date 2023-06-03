@@ -62,7 +62,7 @@ def validate_org_shop_emp(user, shop, org):
             if emp.is_manager == True:
                 return emp_manager
             return emp_non_manager
-        except OrgModel.OrganizationEmployee.DoesNotExist:
+        except ShopModel.OrganizationShopEmployee.DoesNotExist:
             return emp_not_found
     return emp_not_found
     
@@ -72,37 +72,106 @@ def error_response(error):
     return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ShopBusinessTypeListAPIView(generics.ListAPIView):
+class ShopBusinessTypesApi(generics.ListAPIView):
     queryset = ShopModel.ShopBusinessType.objects.all()
     serializer_class = ShopSerializer.ShopBusinessTypeListSerializer_iDukaan
 
 
-class AddShopAPIView(generics.CreateAPIView, PermissionRequiredMixin):
-    serializer_class = ShopSerializer.AddShopSerializer_iDukaan
+class OrgShopApi(viewsets.ViewSet, PermissionRequiredMixin):
     permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
-    def post(self, request, *args, **kwargs):
+    def create(self, request, *args, **kwargs):
+        response_data = {}
+        response_data['orgId'] = str(request.data['organization'])
         check = validate_org_emp(request.user, request.data['organization'])
         if check == emp_manager:
             try:
-                shop_lic = ShopModel.ShopLicense.objects.get(registration = request.data['lic_number'])
-                failed_response_map['error'] = shop_license_already_exist
-                return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+                ShopModel.ShopLicense.objects.get(registration = request.data['lic_number'])
+                response_data['error'] = shop_license_already_exist
+                return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
             except ShopModel.ShopLicense.DoesNotExist:
-                serializer = self.get_serializer(data=request.data)
+                serializer = ShopSerializer.AddShopSerializer_iDukaan(data=request.data, context={'user': request.user})
                 if serializer.is_valid():
                     serializer.save()
-                    return Response(status=status.HTTP_201_CREATED)
+                    return Response(serializer.data, status=status.HTTP_201_CREATED)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
         elif check == emp_non_manager:
-            failed_response_map['error'] = organization_employee_failed_manager
-            return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
-
+            response_data['error'] = organization_employee_failed_manager
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         else:
-            failed_response_map['error'] = is_error
-            return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+            response_data['error'] = is_error
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         
+    def list(self, request, *args, **kwargs):
+        response_data = {}
+        response_data['orgId'] = kwargs['orgId']
+        check = validate_org_emp(request.user, kwargs['orgId'])
+        if check == emp_manager:
+            shop_list = []
+            shops = ShopModel.OrganizationShop.objects.filter(organization=kwargs['orgId'])
+            if shops.count() != 0:
+                for shop in shops:
+                    response = ShopSerializer.OrganizationShopListSerializer_iDukaan(shop.shop).data
+                    response['org'] = kwargs['orgId']
+                    shop_list.append(response)
+                response_data['orgShops'] = shop_list
+                return Response(response_data, status=status.HTTP_200_OK)
+            response_data['error'] = organization_shop_employee_failed
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)  
+        elif check == emp_non_manager:
+            shop_list = []
+            shops = ShopModel.OrganizationShopEmployee.objects\
+                    .filter(user=request.user, organization=kwargs['orgId'])
+            if shops.count() != 0:
+                for shop in shops:
+                    response = ShopSerializer.OrganizationShopListSerializer_iDukaan(shop.shop).data
+                    response['org'] = kwargs['orgId']
+                    shop_list.append(response)
+                response_data['orgShops'] = shop_list
+                return Response(response_data, status=status.HTTP_200_OK)
+            response_data['error'] = organization_shop_employee_failed
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            response_data['error'] = is_error
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
+    def partial_update(self, request, *args, **kwargs):
+        response_data = {}
+        response_data['id'] = str(request.data['id'])
+        check = validate_org_shop_emp(request.user, request.data['id'], kwargs['orgId'])
+        if check == emp_manager:
+            try:
+                shop = ShopModel.Shop.objects.get(id=request.data['id'])
+            except ShopModel.Shop.DoesNotExist:
+                response_data['error'] = is_error
+                return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+            serializer = ShopSerializer.PatchShopSerializer_iDukaan(shop, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(response_data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        elif check == emp_non_manager:
+            response_data['error'] = organization_shop_employee_failed_manager
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            response_data['error'] = is_error
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+        
+    def retrieve(self, request, *args, **kwargs):
+        response_data = {}
+        check = validate_org_shop_emp(request.user, request.headers['id'], kwargs['orgId'])
+        if check == emp_manager or check == emp_non_manager:
+            try:
+                shop = ShopModel.Shop.objects.get(id=request.headers['id'])
+                serializer = ShopSerializer.ShopDetailsSerializer_iDukaan(shop)
+                response_data = serializer.data
+                return Response(response_data, status=status.HTTP_200_OK)
+            except ShopModel.Shop.DoesNotExist:
+                pass 
+        response_data['error'] = is_error
+        response_data['id'] = str(request.headers['id'])
+        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
 
 class ShopListAPIView(generics.ListAPIView, PermissionRequiredMixin):
     serializer_class = ShopSerializer.ShopListSerializer_iDukaan
@@ -120,83 +189,7 @@ class ShopListAPIView(generics.ListAPIView, PermissionRequiredMixin):
             return Response(response_map, status=status.HTTP_200_OK)
         
         failed_response_map['error'] = shops_list_not_found
-        return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
-
-
-class OrgShopListAPIView(generics.ListAPIView, PermissionRequiredMixin):
-    serializer_class = ShopSerializer.OrganizationShopListSerializer_iDukaan
-    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
-
-    def get(self, request, *args, **kwargs):
-        check = validate_org_emp(request.user, kwargs['orgid'])
-        if check == emp_manager:
-            shop_list = []
-            shops = ShopModel.OrganizationShop.objects.filter(organization=kwargs['orgid'])
-            if shops.count() != 0:
-                for shop in shops:
-                    response = self.get_serializer(shop.shop).data
-                    response['org'] = kwargs['orgid']
-                    shop_list.append(response)
-                response_map['data'] = shop_list
-                return Response(response_map, status=status.HTTP_200_OK)
-            failed_response_map['error'] = organization_shop_employee_failed
-            return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)  
-        
-        elif check == emp_non_manager:
-            shop_list = []
-            shops = ShopModel.OrganizationShopEmployee.objects\
-                    .filter(user=request.user, organization=kwargs['orgid'])
-            if shops.count() != 0:
-                for shop in shops:
-                    response = self.get_serializer(shop.shop).data
-                    response['org'] = kwargs['orgid']
-                    shop_list.append(response)
-                response_map['data'] = shop_list
-                return Response(response_map, status=status.HTTP_200_OK)
-            failed_response_map['error'] = organization_shop_employee_failed
-            return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
-        
-        else:
-            failed_response_map['error'] = is_error
-            return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
-
-
-class OrgshopPatchDetailsAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
-    permission_classes = [IsAuthenticated,UserPerm.IsVerified]
-
-    def partial_update(self, request, *args, **kwargs):
-        check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])
-        if check == emp_manager:
-            try:
-                shop = ShopModel.Shop.objects.get(id=request.data['id'])
-            except ShopModel.Shop.DoesNotExist:
-                failed_response_map['error'] = is_error
-                return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
-            serializer = ShopSerializer.PatchShopSerializer_iDukaan(shop, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(status=status.HTTP_200_OK)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-        elif check == emp_non_manager:
-            failed_response_map['error'] = organization_shop_employee_failed_manager
-            return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
-
-        else:
-            failed_response_map['error'] = is_error
-            return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
-        
-    
-    def retrieve(self, request, *args, **kwargs):
-        check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])
-        if check == emp_manager or check == emp_non_manager:
-            shop = ShopModel.Shop.objects.get(pk=kwargs['shopid'])
-            serializer = ShopSerializer.ShopDetailsSerializer_iDukaan(shop)
-            response_map['data'] = serializer.data
-            return Response(response_map, status=status.HTTP_200_OK)
-        
-        failed_response_map['error'] = is_error
-        return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+        return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)  
 
 
 class AddOrgShopEmpAPIView(generics.CreateAPIView, PermissionRequiredMixin):
@@ -204,7 +197,7 @@ class AddOrgShopEmpAPIView(generics.CreateAPIView, PermissionRequiredMixin):
     permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def post(self, request, *args, **kwargs):
-        check = validate_org_shop_emp(request.user, kwargs['shopid'], kwargs['orgid'])
+        check = validate_org_shop_emp(request.user, kwargs['shopId'], kwargs['orgId'])
         if check == emp_manager:
             try:
                 employee = OrgModel.OrganizationEmployee.objects.get(id=request.data['empid'])

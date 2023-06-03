@@ -93,12 +93,13 @@ class ShopConfig(admin.ModelAdmin):
         ('PAYMENT', {'fields':('is_cash','is_card','is_upi')}),
         ('STATUS', {'fields':('is_open','is_active')}),
     )
+    raw_id_fields = ['station']
     inlines = [OrganizationShopAdmin,ShopLicenseAdmin,ShopFssaiLicenseAdmin,
                ShopGstAdmin,ShopInventoryAdmin,OrganizationShopEmployeeAdmin]   
 
 
 # Helpine Numbers
-admin.site.register(models.IrGRP)
+admin.site.register(models.IrHelplineNumber)
 
 class TrainScheduleAdmin(admin.TabularInline):
     model = models.TrainSchedule

@@ -141,6 +141,17 @@ class ShopInventory(TimestampModel):
     is_stock = models.BooleanField(default=True, verbose_name='Stock')
 
 
+class IrHelplineNumber(models.Model):
+    name = models.CharField(max_length=30, verbose_name="Name")
+    state = models.ForeignKey(GeoModel.State, on_delete=models.CASCADE, blank=True, null=True, verbose_name='State')
+    contact_number = models.CharField(max_length=15,verbose_name='Helpline Number')
+    whatsapp = models.CharField(max_length=15, blank=True, null=True, verbose_name='WhatsApp')
+    desc = models.TextField(verbose_name='Details', blank=True, null=True)
+
+    def __str__(self):
+        return self.contact_number
+
+
 class IrGRP(models.Model):
     state = models.ForeignKey(GeoModel.State, on_delete=models.CASCADE, verbose_name='State')
     contact_number = models.CharField(max_length=15, verbose_name='Contact Number')

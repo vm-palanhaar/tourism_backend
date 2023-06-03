@@ -25,19 +25,11 @@ iDukaan APIs Serializer
 class UserRegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True,validators=[UniqueValidator(queryset=UserModel.User.objects.all())])
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
-    password2 = serializers.CharField(write_only=True, required=True)
     class Meta:
         model = UserModel.User
-        fields = ('username', 'password', 'password2', 'email', 'first_name', 'last_name','contact_number')
-        extra_kwargs = {
-            'first_name': {'required': True},
-            'last_name': {'required': True},
-        }
+        fields = ('username','password','email','first_name','last_name','contact_number')
 
-    def validate(self, attrs):
-        if attrs['password'] != attrs['password2']:
-            raise serializers.ValidationError({"password": "Password fields didn't match."})
-        return attrs
+        #raise serializers.ValidationError({"password": "Password fields didn't match."})
 
     def create(self, validated_data):
         user = UserModel.User.objects.create_user(
@@ -68,7 +60,7 @@ class UserLoginResponseSerializer(serializers.ModelSerializer):
     token = serializers.SerializerMethodField()
     class Meta:
         model = UserModel.User
-        fields = ['username','first_name','token']
+        fields = ['username','first_name','token','is_verified']
     
     def get_token(self, instance): 
         return AuthToken.objects.create(instance)[1]
