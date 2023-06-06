@@ -46,7 +46,7 @@ class UserLoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     first_name = serializers.CharField(read_only=True)
     last_name = serializers.CharField(read_only=True)
-    is_verified = serializers.CharField(read_only=True)
+    is_verified = serializers.BooleanField(read_only=True)
     password = serializers.CharField(write_only=True)
     class Meta:
         model = UserModel.User

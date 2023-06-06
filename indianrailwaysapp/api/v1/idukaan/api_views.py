@@ -44,11 +44,11 @@ emp_non_manager = 0
 emp_not_found = -1
 def validate_org_emp(user, org):
     try:
-        emp = OrgModel.OrganizationEmployee.objects.get(user=user, organization=org)
+        emp = OrgModel.OrgEmp.objects.get(user=user, organization=org)
         if emp.manager == True:
             return emp_manager
         return emp_non_manager
-    except OrgModel.OrganizationEmployee.DoesNotExist:
+    except OrgModel.OrgEmp.DoesNotExist:
         return emp_not_found
     
 
@@ -200,14 +200,14 @@ class AddOrgShopEmpAPIView(generics.CreateAPIView, PermissionRequiredMixin):
         check = validate_org_shop_emp(request.user, kwargs['shopId'], kwargs['orgId'])
         if check == emp_manager:
             try:
-                employee = OrgModel.OrganizationEmployee.objects.get(id=request.data['empid'])
-            except OrgModel.OrganizationEmployee.DoesNotExist:
+                employee = OrgModel.OrgEmp.objects.get(id=request.data['empid'])
+            except OrgModel.OrgEmp.DoesNotExist:
                 failed_response_map['error'] = organization_shop_employee_add_failed
                 return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
             
             try:
                 ShopModel.OrganizationShopEmployee.objects.get(user=employee.user,
-                    organization=employee.organization, shop=request.data['shop'])
+                    organization=employee.org, shop=request.data['shop'])
                 failed_response_map['error'] = organization_shop_employee_add_already_exists_failed
                 return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
             except ShopModel.OrganizationShopEmployee.DoesNotExist:

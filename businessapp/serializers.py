@@ -21,35 +21,35 @@ iDukaan APIs Serializer
 
 class OrgTypesSerializer(serializers.ModelSerializer):
     class Meta:
-        model = OrgModel.OrganizationType
+        model = OrgModel.OrgType
         fields = '__all__'
 
 
 class AddOrgSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(required=False, read_only=True)
-    document = serializers.FileField(write_only=True)
+    id = serializers.IntegerField(read_only=True)
+    doc = serializers.FileField(write_only=True)
     class Meta:
-        model = OrgModel.Organization
+        model = OrgModel.Org
         exclude = ['is_active','created_at','updated_at']
 
     def create(self, validated_data):
         org = super().create(validated_data)
-        employee = OrgModel.OrganizationEmployee.objects.create(
-            organization = org,
+        org_emp = OrgModel.OrgEmp.objects.create(
+            org = org,
             user = self.context.get('user'),
-            manager = True
+            is_manager = True
         )
-        employee.save
+        org_emp.save
         return org
 
 
 class OrgListSerializer(serializers.ModelSerializer):
     id = serializers.CharField()
-    entity = serializers.CharField()
+    type = serializers.CharField()
     irShops = serializers.SerializerMethodField()
     class Meta:
-        model = OrgModel.Organization
-        exclude = ['registration','document','created_at','updated_at']
+        model = OrgModel.Org
+        exclude = ['reg_no','doc','created_at','updated_at']
 
     def get_irShops(self, instance):
         shops = IRModel.OrganizationShop.objects.filter(organization=instance).count()
@@ -58,15 +58,15 @@ class OrgListSerializer(serializers.ModelSerializer):
 
 class OrgInfoSerializer(serializers.ModelSerializer):
     id = serializers.CharField()
-    entity = serializers.CharField()
+    type = serializers.CharField()
     emp = serializers.SerializerMethodField()
     irShops = serializers.SerializerMethodField()
     class Meta:
-        model = OrgModel.Organization
-        fields = ['id','name','entity','emp','irShops']
+        model = OrgModel.Org
+        fields = ['id','name','type','emp','irShops']
     
     def get_emp(self, instance):
-        return OrgModel.OrganizationEmployee.objects.filter(organization=instance).count()
+        return OrgModel.OrgEmp.objects.filter(org=instance).count()
     
     def get_irShops(self, instance):
         shops = IRModel.OrganizationShop.objects.filter(organization=instance).count()
@@ -76,23 +76,23 @@ class OrgInfoSerializer(serializers.ModelSerializer):
 class AddOrgEmpSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, read_only=True)
     class Meta:
-        model = OrgModel.OrganizationEmployee
+        model = OrgModel.OrgEmp
         exclude = ['created_at','updated_at']
 
 
 class UpdateOrgEmpSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(required=False, read_only=True)
+    id = serializers.IntegerField(read_only=True)
     class Meta:
-        model = OrgModel.OrganizationEmployee
-        fields = ['id','manager']
+        model = OrgModel.OrgEmp
+        fields = ['id','is_manager']
 
 
 class OrgEmpListSerializer(serializers.ModelSerializer):
     id = serializers.CharField()
     name = serializers.SerializerMethodField()
     class Meta:
-        model = OrgModel.OrganizationEmployee
-        exclude = ['user','organization','created_at','updated_at']
+        model = OrgModel.OrgEmp
+        exclude = ['user','org','created_at','updated_at']
 
     def get_name(self, instance):
         user = UserModel.User.objects.get(username=instance.user)
@@ -101,18 +101,17 @@ class OrgEmpListSerializer(serializers.ModelSerializer):
 
 
 class AddOrgStateGstOpsSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(required=False, read_only=True)
+    id = serializers.CharField(required=False, read_only=True)
     gstin = serializers.CharField(required=True)
     doc = serializers.FileField(write_only=True)
     class Meta:
         model = OrgModel.OrgStateGstOps
-        exclude = ['created_at','updated_at','is_active','is_valid']
+        exclude = ['created_at','updated_at','is_active']
 
 
 class OrgStateGstOpsListSerializer(serializers.ModelSerializer):
     id = serializers.CharField()
-    org = serializers.CharField()
     state = serializers.CharField()
     class Meta:
         model = OrgModel.OrgStateGstOps
-        exclude = ['doc','created_at','updated_at']
+        exclude = ['doc','created_at','updated_at','org']

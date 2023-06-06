@@ -145,7 +145,7 @@ class AddShopSerializer_iDukaan(serializers.ModelSerializer):
         )
         shopLic.save()
 
-        org = OrgModel.Organization.objects.get(id=validated_data['organization'])
+        org = OrgModel.Org.objects.get(id=validated_data['organization'])
         orgShop = models.OrganizationShop.objects.create(
             organization = org,
             shop = shop
@@ -200,9 +200,9 @@ class AddOrgShopEmpSerializer_iDukaan(serializers.ModelSerializer):
         fields = ['id','empid','shop','is_manager']
 
     def create(self, validated_data):
-        org_emp = OrgModel.OrganizationEmployee.objects.get(id=validated_data['empid'])
+        org_emp = OrgModel.OrgEmp.objects.get(id=validated_data['empid'])
         employee = models.OrganizationShopEmployee.objects.create(
-            organization = org_emp.organization,
+            organization = org_emp.org,
             user = org_emp.user,
             shop = validated_data['shop'],
             is_manager = validated_data['is_manager'],

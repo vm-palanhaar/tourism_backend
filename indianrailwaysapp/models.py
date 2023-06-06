@@ -116,7 +116,7 @@ class ShopFssaiLicense(TimestampModel):
     
 
 class ShopGst(TimestampModel):
-    org = models.ForeignKey(OrgModel.Organization, on_delete=models.CASCADE, verbose_name='Organization')
+    org = models.ForeignKey(OrgModel.Org, on_delete=models.CASCADE, verbose_name='Organization')
     org_st_gst = models.ForeignKey(OrgModel.OrgStateGstOps, on_delete=models.CASCADE, verbose_name='Organizaton-State')
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, verbose_name='Shop Name')
     def __str__(self):
@@ -124,12 +124,12 @@ class ShopGst(TimestampModel):
 
 
 class OrganizationShop(TimestampModel):
-    organization = models.ForeignKey(OrgModel.Organization, on_delete=models.CASCADE, verbose_name='Organization')
+    organization = models.ForeignKey(OrgModel.Org, on_delete=models.CASCADE, verbose_name='Organization')
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, verbose_name='Shop')
 
 
 class OrganizationShopEmployee(TimestampModel):
-    organization = models.ForeignKey(OrgModel.Organization, on_delete=models.CASCADE, verbose_name='Organization')
+    organization = models.ForeignKey(OrgModel.Org, on_delete=models.CASCADE, verbose_name='Organization')
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, verbose_name='Shop')
     user = models.ForeignKey(UserModel.User, on_delete=models.CASCADE, verbose_name='User')
     is_manager = models.BooleanField(default=False, verbose_name='Manager')

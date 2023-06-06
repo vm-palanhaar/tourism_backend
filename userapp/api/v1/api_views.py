@@ -9,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from knox.models import AuthToken
 
 from userapp import serializers, models
+from userapp.api import errors as UserError
 
 '''
 PROD
@@ -18,26 +19,6 @@ PROD
 
 DEV
 '''
-
-failed_response_map = {'error':None}
-response_map = {"data":None}
-
-error_user_invalid = {
-    'code' : 'user_invalid',
-    'message' : ''
-}
-
-error_user_invalid_cred = {
-    'code' : 'user_invalid_cred',
-    'message' : ''
-}
-
-error_user_active = {
-    'code' : 'user_active',
-    'message' : ''
-}
-
-
 
 class UserRegisterApi(generics.CreateAPIView):
     serializer_class = serializers.UserRegisterSerializer
@@ -54,26 +35,27 @@ class UserLoginApi(generics.GenericAPIView):
     serializer_class = serializers.UserLoginSerializer
 
     def post(self, request, *args, **kwargs):
+        response_data = {}
         try:
             user = models.User.objects.get(username = request.data['username'])
         except models.User.DoesNotExist:
-            return Response(error_user_invalid, status=status.HTTP_400_BAD_REQUEST)
+            response_data['error'] = UserError.error_user_invalid
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
     
         if user.is_active == False:
             #TODO: Email verification to user
-            return Response(error_user_active, status=status.HTTP_400_BAD_REQUEST)
+            response_data['error'] = UserError.error_user_inactive
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
     
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data
             login(request, user)
-            response_data = {
-                'user' : serializer.data,
-                'token' : AuthToken.objects.create(user)[1]
-            }
+            response_data['user'] = serializer.data
+            response_data['token'] = AuthToken.objects.create(user)[1]
             return Response(response_data, status=status.HTTP_200_OK)
-        
-        return Response(error_user_invalid_cred, status=status.HTTP_400_BAD_REQUEST)
+        response_data['error'] = UserError.error_user_invalid_cred
+        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserProfileApi(generics.RetrieveAPIView, PermissionRequiredMixin):
@@ -83,7 +65,7 @@ class UserProfileApi(generics.RetrieveAPIView, PermissionRequiredMixin):
         try:
             user = models.User.objects.get(username = request.user, is_active=True)
         except models.User.DoesNotExist:
-            return Response(error_user_invalid, status=status.HTTP_400_BAD_REQUEST)
+            return Response(UserError.error_user_invalid, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = serializers.UserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)

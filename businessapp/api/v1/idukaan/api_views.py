@@ -10,31 +10,18 @@ from businessapp import models as OrgModel
 from userapp import models as UserModel
 from businessapp import serializers as OrgSerializer
 
+from businessapp.api import errors as OrgError
+from userapp.api import errors as UserError
+
 '''
 PROD
-1. OrganizationTypeListApi
-2. AddOrganizationApi
-3. OrganizationListApi
-4. OrganizationDetailsApi
-5. AddOrganizationEmployeeApi
-6. OrganizationEmployeeListApi
-7. DeleteOrganizationEmployeeApi
+1. OrgTypesApi
+2. OrgApi
+3. OrgEmpApi
+4. OrgStateGstApi
 DEV
 '''
 
-failed_response_map = {'error':None}
-response_map = {'data':None}
-
-error_bad_action = 'Bad Action! Issue reported to Team and account will be de-activated!'
-
-error_org_exists = 'org_exists'
-error_org_emp_not_found = 'You are not association with the organization!'
-error_org_add_emp_already_exist = 'User is already associated with organization!'
-error_org_update_delete_emp_not_found = 'User is not associated with organization!'
-error_user_not_found = 'User does not exist!'
-error_org_emp_failed_manager = 'You are not authorized to view/update resource in organization!'
-error_org_update_delete_self_emp = 'Bad action!'
-error_org_state_gst_not_found = 'Organization do not support inter-state operations'
 
 '''
 1 : Manager
@@ -43,17 +30,17 @@ error_org_state_gst_not_found = 'Organization do not support inter-state operati
 '''
 def validate_org_emp(user, org):
     try:
-        emp = OrgModel.OrganizationEmployee.objects.get(user=user, organization=org)
-        if emp.manager == True:
+        emp = OrgModel.OrgEmp.objects.get(user=user, org=org)
+        if emp.is_manager == True:
             return 1
         return 0
-    except OrgModel.OrganizationEmployee.DoesNotExist:
+    except OrgModel.OrgEmp.DoesNotExist:
         return -1
     
 def validate_emp(user, org):
         try:
-            return OrgModel.OrganizationEmployee.objects.get(id=user, organization=org)
-        except OrgModel.OrganizationEmployee.DoesNotExist:
+            return OrgModel.OrgEmp.objects.get(user=user, org=org)
+        except OrgModel.OrgEmp.DoesNotExist:
             return None
         
 def error_response_400(response_fail):
@@ -62,9 +49,12 @@ def error_response_400(response_fail):
 def error_response_401(response_fail):
     return Response(response_fail, status=status.HTTP_401_UNAUTHORIZED)
 
+def error_response_409(response_fail):
+    return Response(response_fail, status=status.HTTP_409_CONFLICT)
+
 
 class OrgTypesApi(generics.ListAPIView, PermissionRequiredMixin):
-    queryset = OrgModel.OrganizationType.objects.all()
+    queryset = OrgModel.OrgType.objects.all()
     serializer_class = OrgSerializer.OrgTypesSerializer
     permission_classes = [IsAuthenticated]
 
@@ -75,45 +65,38 @@ class OrgApi(viewsets.ViewSet, PermissionRequiredMixin):
     def create(self, request, *args, **kwargs):
         response_data = {}
         try:
-            org = OrgModel.Organization.objects.get(registration=request.data['registration'])
-            response_data['id'] = org.id
-            response_data['error'] = {
-                'code' : error_org_exists,
-                'message' : 'The registration number you entered already exists in our iDukaan app. Please double-check the registration number and try again. If you need further information or assistance, we recommend raising a request for more information.'
-            }
+            OrgModel.Org.objects.get(reg_no=request.data['reg_no'])
+            response_data['error'] = OrgError.error_business_org_found
             return Response(response_data, status=status.HTTP_409_CONFLICT)
-        except OrgModel.Organization.DoesNotExist:
+        except OrgModel.Org.DoesNotExist:
             serializer = OrgSerializer.AddOrgSerializer(data=request.data, context={'user': request.user})
             if serializer.is_valid():
                 serializer.save()
-                response_data = {
-                    'id' : serializer.data['id'],
-                    'msg' : 'Hello'
-                }
+                response_data['org'] = serializer.data
+                response_data['message'] = ''
                 return Response(response_data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
     def list(self, request, *args, **kwargs):
         response_data = {}
-        # Org Info
-        if 'id' in request.headers:
-            check = validate_org_emp(request.user, request.headers['id'])
-            if check == 0 or check == 1:
-                org = OrgModel.Organization.objects.get(id=request.headers['id'])
-                serializer =OrgSerializer.OrgInfoSerializer(org)
-                response_data = serializer.data
-                return Response(response_data, status=status.HTTP_200_OK)
-            response_data['msg'] = error_bad_action
-            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
-        # Org List
-        queryset = request.user.organizationemployee_set.all()
+        queryset = request.user.orgemp_set.all()
         if queryset.count() > 0:
             orgs = []
             for org in queryset:
-                orgs.append(OrgSerializer.OrgListSerializer(org.organization).data)
-            response_data['org'] = orgs
+                orgs.append(OrgSerializer.OrgListSerializer(org.org).data)
+            response_data['orgList'] = orgs
             return Response(response_data, status=status.HTTP_200_OK)
-        response_data['msg'] = error_org_emp_not_found
+        response_data['error'] = OrgError.error_business_org_emp_not_found_request_user
+        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+    
+    def retrieve(self, request, *args, **kwargs):
+        response_data = {}
+        org_emp = validate_org_emp(request.user, kwargs['orgId'])
+        if org_emp == 1 or org_emp == 0:
+            org = OrgModel.Org.objects.get(id = kwargs['orgId'])
+            serializer = OrgSerializer.OrgInfoSerializer(org)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        response_data['error'] = OrgError.error_business_org_emp_not_found_request_user
         return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -123,141 +106,176 @@ class OrgEmpApi(viewsets.ViewSet, PermissionRequiredMixin):
     def create(self, request, *args, **kwargs):
         response_data = {}
         response_data['orgId'] = kwargs['orgId']
-        # To validate Headers and Url argument
-        if kwargs['orgId'] == request.data['organization']:
-            emp_manager = validate_org_emp(request.user, request.data['organization'])
-            if emp_manager == 1:
+        # Validate OrgId from headers and url arguments
+        if kwargs['orgId'] == request.data['org']:
+            org_emp = validate_emp(request.user, kwargs['orgId'])
+            if org_emp.is_manager == True:
                 try:
-                    orgEmp = OrgModel.OrganizationEmployee.objects.get(user=request.data['user'], organization=request.data['organization'])
-                    response_data['msg'] = f'{orgEmp.user.first_name} {orgEmp.user.last_name} is already associated with {orgEmp.organization.name}'
+                    emp = OrgModel.OrgEmp.objects.get(user = request.data['user'], org = request.data['org'])
+                    OrgError.error_org_add_emp_found['message'] = f'{emp.user.first_name} {emp.user.last_name} is already associated with {emp.org.name}'
+                    response_data['error'] = OrgError.error_org_add_emp_found
                     return Response(response_data, status=status.HTTP_409_CONFLICT)
-                except OrgModel.OrganizationEmployee.DoesNotExist:
+                except OrgModel.OrgEmp.DoesNotExist:
                     try:
-                        user = UserModel.User.objects.get(username=request.data['user'], is_verified=True)
+                        user = UserModel.User.objects.get(username = request.data['user'])
                     except UserModel.User.DoesNotExist:
-                        response_data['msg'] = error_user_not_found
+                        response_data['error'] = UserError.error_user_invalid
+                        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+                    if user.is_active == False and user.is_verified == False:
+                        UserError.error_user_inactive_notverified['message'] = f'{user.first_name} {user.last_name} account is not active and verified!'
+                        response_data['error'] = UserError.error_user_inactive_notverified
+                        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+                    elif user.is_active == False:
+                        UserError.error_user_inactive_notverified['message'] = f'{user.first_name} {user.last_name} account is not active!'
+                        response_data['error'] = UserError.error_user_inactive
+                        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+                    elif user.is_verified ==  False:
+                        UserError.error_user_inactive_notverified['message'] = f'{user.first_name} {user.last_name} account is not verified!'
+                        response_data['error'] = UserError.error_user_notverified
+                        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+                    # PROD - To prevent Palanhaar employees mail compromise
+                    elif user.is_staff or user.is_superuser or '@palanhaar.in' in request.data['user']:
+                        request.user.is_active = False
+                        request.user.save()
+                        response_data['error'] = OrgError.error_bad_action
                         return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
                     serializer = OrgSerializer.AddOrgEmpSerializer(data=request.data)
                     if serializer.is_valid():
                         serializer.save()
-                        response_data['msg'] = f'{user.first_name} {user.last_name}'
-                        return Response(serializer.data, status=status.HTTP_201_CREATED)
+                        response_data['orgEmp'] = serializer.data
+                        response_data['message'] = f'{user.first_name} {user.last_name} is associated with {org_emp.org.name}'
+                        return Response(response_data, status=status.HTTP_201_CREATED)
                     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                
-            elif emp_manager == 0:
-                response_data['error'] = error_org_emp_failed_manager
-                return error_response_400(response_data)
-            
-        response_data['error'] = error_bad_action
+            elif org_emp.is_manager == False:
+                response_data['error'] = error_business_org_emp_not_mng
+                return error_response_400(response_data) 
+            response_data['error'] = OrgError.error_business_org_emp_not_found_request_user
+            return error_response_400(response_data)
+        request.user.is_active = False
+        request.user.save()
+        response_data['error'] = OrgError.error_bad_action
         return error_response_400(response_data)
-    
 
     def list(self, request, *args, **kwargs):
         response_data = {}
         response_data['orgId'] = kwargs['orgId']
-        check = validate_org_emp(request.user, kwargs['orgId'])
-        if check == 1 or check == 0:
-            employees = OrgModel.OrganizationEmployee.objects.filter(organization=kwargs['orgId'])
+        org_emp = validate_org_emp(request.user, kwargs['orgId'])
+        if org_emp == 1 or org_emp == 0:
+            employees = OrgModel.OrgEmp.objects.filter(org=kwargs['orgId'])
             serializer = OrgSerializer.OrgEmpListSerializer(employees, many=True)
             response_data['orgEmpList'] = serializer.data
             return Response(response_data, status=status.HTTP_200_OK)
         
-        response_data['error'] = error_bad_action
+        response_data['error'] = OrgError.error_business_org_emp_not_found_request_user
         return error_response_400(response_data)
     
-
     def partial_update(self, request, *args, **kwargs):
         response_data = {}
         response_data['id'] = str(request.data['id'])
         response_data['orgId'] = kwargs['orgId']
-        check = validate_org_emp(request.user, kwargs['orgId'])
-        if check == 1:
-            emp = validate_emp(request.data['id'], kwargs['orgId'])
-            if emp != None:
+        # Validate OrgId from headers and url arguments
+        if kwargs['orgEmpId'] == str(request.data['id']):
+            org_emp = validate_org_emp(request.user, kwargs['orgId'])
+            if org_emp == 1:
+                try:
+                    emp = OrgModel.OrgEmp.objects.get(id = request.data['id'])
+                except OrgModel.OrgEmp.DoesNotExist:
+                    response_data['error'] = error_business_org_emp_not_found
+                    return error_response_400(response_data)
                 if request.user == emp.user:
-                    response_data['error'] = error_org_update_delete_self_emp
+                    response_data['error'] = error_business_org_emp_self_update_delete
                     return error_response_400(response_data)
                 serializer = OrgSerializer.UpdateOrgEmpSerializer(emp, data=request.data, partial=True)
                 if serializer.is_valid():
                     serializer.save()
                     return Response(response_data, status=status.HTTP_200_OK)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
-            response_data['error'] = error_org_update_delete_emp_not_found
+            elif org_emp == 0:
+                response_data['error'] = error_business_org_emp_not_mng
+                return error_response_400(response_data)
+            response_data['error'] = OrgError.error_business_org_emp_not_found_request_user
             return error_response_400(response_data)
-
-        elif check == 0:
-            response_data['error'] = error_org_emp_failed_manager
-            return error_response_400(response_data)
-        
-        response_data['error'] = error_bad_action
+        request.user.is_active = False
+        request.user.save()
+        response_data['error'] = OrgError.error_bad_action
         return error_response_400(response_data)
-
 
     def destroy(self, request, *args, **kwargs):
         response_data = {}
         response_data['orgId'] = kwargs['orgId']
-        response_data['orgEmpId'] = str(request.data['id'])
-        check = validate_org_emp(request.user, kwargs['orgId'])
-        if check == 1:
-            emp = validate_emp(request.data['id'], kwargs['orgId'])
-            if emp != None:
+        response_data['id'] = str(request.data['id'])
+        # Validate OrgId from headers and url arguments
+        if kwargs['orgEmpId'] == str(request.data['id']):
+            org_emp = validate_org_emp(request.user, kwargs['orgId'])
+            if org_emp == 1:
+                try:
+                    emp = OrgModel.OrgEmp.objects.get(id = request.data['id'])
+                except OrgModel.OrgEmp.DoesNotExist:
+                    response_data['error'] = OrgError.error_business_org_emp_not_found
+                    return error_response_400(response_data)
                 if request.user == emp.user:
-                    response_data['error'] = error_org_update_delete_self_emp
+                    response_data['error'] = OrgError.error_business_org_emp_self_update_delete
                     return error_response_400(response_data)
                 emp.delete()
-                return Response(response_data, status=status.HTTP_204_NO_CONTENT)
-            
-            response_data['error'] = error_org_update_delete_emp_not_found
+                return Response(response_data, status=status.HTTP_200_OK)
+            elif org_emp == 0:
+                response_data['error'] = OrgError.error_business_org_emp_not_mng
+                return error_response_400(response_data)
+            response_data['error'] = OrgError.error_business_org_emp_not_found_request_user
             return error_response_400(response_data)
-
-        elif check == 0:
-            response_data['error'] = error_org_emp_failed_manager
-            return error_response_400(response_data)
-        
-        response_data['error'] = error_bad_action
+        request.user.is_active = False
+        request.user.save()
+        response_data['error'] = OrgError.error_bad_action
         return error_response_400(response_data)
 
 
-class OrgStateGstAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
+class OrgStateGstApi(viewsets.ViewSet, PermissionRequiredMixin):
     permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def create(self, request, *args, **kwargs):
         response_data = {}
         response_data['orgId'] = kwargs['orgId']
-        check = validate_org_emp(request.user, kwargs['orgId'])
-        if check == 1:
-            serializer = OrgSerializer.AddOrgStateGstOpsSerializer(data = request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        elif check == 0:
-            response_data['error'] = error_org_emp_failed_manager
+        # Validate OrgId from headers and url arguments
+        if kwargs['orgId'] == request.data['org']:
+            org_emp = validate_org_emp(request.user, kwargs['orgId'])
+            if org_emp == 1:
+                try:
+                    OrgModel.OrgStateGstOps.objects.get(gstin = request.data['gstin'])
+                    response_data['error'] = OrgError.error_business_org_ops_found
+                    return error_response_409(response_data)
+                except OrgModel.OrgStateGstOps.DoesNotExist:
+                    pass
+                serializer = OrgSerializer.AddOrgStateGstOpsSerializer(data = request.data)
+                if serializer.is_valid():
+                    serializer.save()
+                    response_data['orgOps'] = serializer.data
+                    return Response(response_data, status=status.HTTP_201_CREATED)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            elif org_emp == 0:
+                response_data['error'] = OrgError.error_business_org_emp_not_mng
+                return error_response_400(response_data)
+            response_data['error'] = OrgError.error_business_org_emp_not_found_request_user
             return error_response_400(response_data)
-        
-        response_data['error'] = error_bad_action
+        request.user.is_active = False
+        request.user.save()
+        response_data['error'] = OrgError.error_bad_action
         return error_response_400(response_data)
-
 
     def list(self, request, *args, **kwargs):
         response_data = {}
         response_data['orgId'] = kwargs['orgId']
-        check = validate_org_emp(request.user, kwargs['orgId'])
-        if check == 1:
+        org_emp = validate_org_emp(request.user, kwargs['orgId'])
+        if org_emp == 1:
             ops = OrgModel.OrgStateGstOps.objects.filter(org = kwargs['orgId'])
             if ops.count() > 0:
                 serializer = OrgSerializer.OrgStateGstOpsListSerializer(ops, many=True)
                 response_data['opsList'] = serializer.data
-                return Response(response_map, status=status.HTTP_200_OK)
-            
-            response_data['error'] = error_org_state_gst_not_found
+                return Response(response_data, status=status.HTTP_200_OK)
+            response_data['error'] = OrgError.error_business_org_ops_not_found
             return error_response_400(response_data)
-
-        elif check == 0:
-            response_data['error'] = error_org_emp_failed_manager
+        elif org_emp == 0:
+            response_data['error'] = OrgError.error_business_org_emp_not_mng
             return error_response_400(response_data)
-        
-        response_data['error'] = error_bad_action
+        response_data['error'] = OrgError.error_business_org_emp_not_found_request_user
         return error_response_400(response_data)
+

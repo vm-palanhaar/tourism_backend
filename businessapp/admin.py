@@ -4,19 +4,19 @@ from businessapp import models
 from indianrailwaysapp import models as IrModel
 
 
-@admin.register(models.OrganizationType)
-class OrganizationTypeConfig(admin.ModelAdmin):
-    list_display = ['entity','document','verified','pending']
+@admin.register(models.OrgType)
+class OrgTypeConfig(admin.ModelAdmin):
+    list_display = ['entity','doc','verified','pending']
 
     def verified(self, instance):
-        return models.Organization.objects.filter(entity=instance, is_active=True).count()
+        return models.Org.objects.filter(type=instance, is_active=True).count()
     
     def pending(self, instance):
-        return models.Organization.objects.filter(entity=instance, is_active=False).count()
+        return models.Org.objects.filter(type=instance, is_active=False).count()
 
 
-class OrganizationEmployeeAdmin(admin.TabularInline):
-    model = models.OrganizationEmployee
+class OrgEmpAdmin(admin.TabularInline):
+    model = models.OrgEmp
     extra = 0
 
 class IrOrgShopAdmin(admin.TabularInline):
@@ -27,10 +27,10 @@ class OrgStateGstOpsAdmin(admin.TabularInline):
     model = models.OrgStateGstOps
     extra = 0
 
-@admin.register(models.Organization)
-class OrganizationConfig(admin.ModelAdmin):
-    list_display = ['name','registration','entity','is_active']
-    list_filter = ['entity','is_active']
-    search_fields = ['name','registration']
-    raw_id_fields = ['entity']
-    inlines = [OrganizationEmployeeAdmin,OrgStateGstOpsAdmin,IrOrgShopAdmin]
+@admin.register(models.Org)
+class OrgConfig(admin.ModelAdmin):
+    list_display = ['name','reg_no','type','is_active']
+    list_filter = ['type','is_active']
+    search_fields = ['name','reg_no']
+    raw_id_fields = ['type']
+    inlines = [OrgEmpAdmin,OrgStateGstOpsAdmin,IrOrgShopAdmin]

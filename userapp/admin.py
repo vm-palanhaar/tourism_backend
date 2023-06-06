@@ -6,7 +6,7 @@ from businessapp import models as BusinessModel
 from indianrailwaysapp import models as IrModel
 
 class OrganizationEmployeeAdmin(admin.TabularInline):
-    model = BusinessModel.OrganizationEmployee
+    model = BusinessModel.OrgEmp
     extra = 0
 
 class OrganizationShopEmployeeAdmin(admin.TabularInline):
