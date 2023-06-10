@@ -64,18 +64,17 @@ class OrgApi(viewsets.ViewSet, PermissionRequiredMixin):
 
     def create(self, request, *args, **kwargs):
         response_data = {}
-        try:
-            OrgModel.Org.objects.get(reg_no=request.data['reg_no'])
+        serializer = OrgSerializer.AddOrgSerializer(data=request.data, context={'user': request.user})
+        if serializer.is_valid():
+            serializer.save()
+            response_data['org'] = serializer.data
+            response_data['message'] = 'Thanks for registering your organization with us.'
+            return Response(response_data, status=status.HTTP_201_CREATED)
+        if 'reg_no' in serializer.data:
             response_data['error'] = OrgError.error_business_org_found
             return Response(response_data, status=status.HTTP_409_CONFLICT)
-        except OrgModel.Org.DoesNotExist:
-            serializer = OrgSerializer.AddOrgSerializer(data=request.data, context={'user': request.user})
-            if serializer.is_valid():
-                serializer.save()
-                response_data['org'] = serializer.data
-                response_data['message'] = ''
-                return Response(response_data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
         
     def list(self, request, *args, **kwargs):
         response_data = {}
@@ -122,15 +121,15 @@ class OrgEmpApi(viewsets.ViewSet, PermissionRequiredMixin):
                         response_data['error'] = UserError.error_user_invalid
                         return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
                     if user.is_active == False and user.is_verified == False:
-                        UserError.error_user_inactive_notverified['message'] = f'{user.first_name} {user.last_name} account is not active and verified!'
+                        UserError.error_user_inactive_notverified['message'] = f'{user.first_name} {user.last_name}\'s account is not active and verified!'
                         response_data['error'] = UserError.error_user_inactive_notverified
                         return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
                     elif user.is_active == False:
-                        UserError.error_user_inactive_notverified['message'] = f'{user.first_name} {user.last_name} account is not active!'
+                        UserError.error_user_inactive['message'] = f'{user.first_name} {user.last_name}\'s account is not active!'
                         response_data['error'] = UserError.error_user_inactive
                         return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
                     elif user.is_verified ==  False:
-                        UserError.error_user_inactive_notverified['message'] = f'{user.first_name} {user.last_name} account is not verified!'
+                        UserError.error_user_notverified['message'] = f'{user.first_name} {user.last_name}\'s account is not verified!'
                         response_data['error'] = UserError.error_user_notverified
                         return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
                     # PROD - To prevent Palanhaar employees mail compromise
@@ -147,7 +146,7 @@ class OrgEmpApi(viewsets.ViewSet, PermissionRequiredMixin):
                         return Response(response_data, status=status.HTTP_201_CREATED)
                     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             elif org_emp.is_manager == False:
-                response_data['error'] = error_business_org_emp_not_mng
+                response_data['error'] = OrgError.error_business_org_emp_not_mng
                 return error_response_400(response_data) 
             response_data['error'] = OrgError.error_business_org_emp_not_found_request_user
             return error_response_400(response_data)
@@ -180,10 +179,10 @@ class OrgEmpApi(viewsets.ViewSet, PermissionRequiredMixin):
                 try:
                     emp = OrgModel.OrgEmp.objects.get(id = request.data['id'])
                 except OrgModel.OrgEmp.DoesNotExist:
-                    response_data['error'] = error_business_org_emp_not_found
+                    response_data['error'] = OrgError.error_business_org_emp_not_found
                     return error_response_400(response_data)
                 if request.user == emp.user:
-                    response_data['error'] = error_business_org_emp_self_update_delete
+                    response_data['error'] = OrgError.error_business_org_emp_self_update_delete
                     return error_response_400(response_data)
                 serializer = OrgSerializer.UpdateOrgEmpSerializer(emp, data=request.data, partial=True)
                 if serializer.is_valid():
@@ -191,7 +190,7 @@ class OrgEmpApi(viewsets.ViewSet, PermissionRequiredMixin):
                     return Response(response_data, status=status.HTTP_200_OK)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             elif org_emp == 0:
-                response_data['error'] = error_business_org_emp_not_mng
+                response_data['error'] = OrgError.error_business_org_emp_not_mng
                 return error_response_400(response_data)
             response_data['error'] = OrgError.error_business_org_emp_not_found_request_user
             return error_response_400(response_data)

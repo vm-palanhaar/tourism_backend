@@ -44,7 +44,7 @@ class OrgEmp(TimestampModel):
 def upload_to_org_gst(instance,filename):
     orgname = instance.org.name
     statename = instance.state.name
-    return f'business/organization/{orgname}/gst/{filename}'
+    return f'business/organization/{orgname}/gst/{statename}_{filename}'
 
 
 class OrgStateGstOps(TimestampModel):
@@ -54,5 +54,6 @@ class OrgStateGstOps(TimestampModel):
     doc = models.FileField(_('Document'), blank=True, null=True, upload_to=upload_to_org_gst)
     expiry = models.DateField(blank=True, null=True, verbose_name='Expiry Date')
     is_active = models.BooleanField(default=False, verbose_name='Active')
+    is_verified = models.BooleanField(default=False, verbose_name='Verified')
     def __str__(self):
         return self.state.name

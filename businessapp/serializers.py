@@ -80,6 +80,7 @@ class AddOrgEmpSerializer(serializers.ModelSerializer):
         exclude = ['created_at','updated_at']
 
 
+
 class UpdateOrgEmpSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     class Meta:
@@ -106,7 +107,7 @@ class AddOrgStateGstOpsSerializer(serializers.ModelSerializer):
     doc = serializers.FileField(write_only=True)
     class Meta:
         model = OrgModel.OrgStateGstOps
-        exclude = ['created_at','updated_at','is_active']
+        exclude = ['created_at','updated_at','is_active','is_verified']
 
 
 class OrgStateGstOpsListSerializer(serializers.ModelSerializer):

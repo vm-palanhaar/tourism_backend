@@ -24,11 +24,28 @@ class UserRegisterApi(generics.CreateAPIView):
     serializer_class = serializers.UserRegisterSerializer
 
     def post(self, request, *args, **kwargs):
+        response_data = {}
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        #TODO: Email verification to user
-        return Response(serializer.data,status=status.HTTP_201_CREATED)
+        if serializer.is_valid():
+            serializer.save()
+            #TODO: Email verification to user
+            response_data['user'] = serializer.data
+            response_data['message'] = 'We are happy to on-board you. Please check registered mail for account verification link.'
+            return Response(response_data,status=status.HTTP_201_CREATED)
+        if 'username' in serializer.errors and 'email' in serializer.errors:
+            response_data['error'] = UserError.error_user_username_email_found
+            return Response(response_data, status=status.HTTP_409_CONFLICT)
+        elif 'username' in serializer.errors:
+            response_data['error'] = UserError.error_user_username_found
+            return Response(response_data, status=status.HTTP_409_CONFLICT)
+        elif 'email' in serializer.errors:
+            response_data['error'] = UserError.error_user_email_found
+            return Response(response_data, status=status.HTTP_409_CONFLICT)
+        elif 'password' in serializer.errors:
+            response_data['error'] = UserError.error_user_password_common
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
 
 
 class UserLoginApi(generics.GenericAPIView):

@@ -10,7 +10,9 @@ error_business_org_found = {
 
 error_business_org_emp_not_found_request_user = {
     'code' : 'bussinessOrgEmpNotFoundRequestUser',
-    'message' : 'You are not associated with the organization!'
+    'message' : 'You are not associated with organization. You can follow any one of the following point:\n\n'\
+                '- Add organization.\n'\
+                '- Request your manager to add you in organization.'
 }
 
 error_business_org_emp_not_mng = {

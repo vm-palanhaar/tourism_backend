@@ -57,13 +57,18 @@ class StateAPIView(generics.ListAPIView):
     serializer_class = serializers.StateSerializer
 
     def get(self, request, *args, **kwargs):
+        response_data = {}
+        response_data['countryCode'] = kwargs['cid']
         states = models.State.objects.filter(country = kwargs['cid'])
         if states.count() > 0:
             serializer = self.get_serializer(states, many=True)
-            response_map['data'] = serializer.data
-            return Response(response_map, status=status.HTTP_200_OK)
-        
-        return error_response(f'States data not available for {kwargs["cid"]}')
+            response_data['states'] = serializer.data
+            return Response(response_data, status=status.HTTP_200_OK)
+        response_data['error'] = {
+            'code' : 'geoStatesNotFound',
+            'message' : f'States data not available for {kwargs["cid"]}'
+        }
+        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
     
 
 class ReverseGeocodeAPIView(generics.GenericAPIView):
