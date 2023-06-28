@@ -6,51 +6,52 @@ from indianrailwaysapp import models
 #Indian Railways Zone, Division, Station
 
 class RailwayDivisionAdmin(admin.TabularInline):
-    model = models.RailwayDivision
+    model = models.RailDivision
     extra = 0
 
-@admin.register(models.RailwayZone)
+@admin.register(models.RailZone)
 class RailwayZoneConfig(admin.ModelAdmin):
     list_display = ('code','name','divisions','railway_stations')
     inlines = [RailwayDivisionAdmin]
 
     def divisions(self, obj):
-        divisions = models.RailwayDivision.objects.filter(zone=obj).count()
+        divisions = models.RailDivision.objects.filter(zone=obj).count()
         return divisions
 
     def railway_stations(self, obj):
-        railwaystations = models.RailwayStation.objects.filter(zone=obj).count()
+        railwaystations = models.RailStation.objects.filter(zone=obj).count()
         return railwaystations
 
 
 class RailwayStationAdmin(admin.TabularInline):
-    model = models.RailwayStation
+    model = models.RailStation
     extra = 0
 
-@admin.register(models.RailwayDivision)
+@admin.register(models.RailDivision)
 class RailwayDivisionConfig(admin.ModelAdmin):
     search_fields = ['zone__name','name']
     list_display = ('name','zone','railway_stations')
     inlines = [RailwayStationAdmin]
 
     def railway_stations(self, obj):
-        railwaystations = models.RailwayStation.objects.filter(division=obj).count()
+        railwaystations = models.RailStation.objects.filter(div=obj).count()
         return railwaystations
     
 
-admin.site.register(models.RailwayStationCategoy)
+admin.site.register(models.RailStationCategoy)
 
 class ShopAdmin(admin.TabularInline):
     model = models.Shop
     fields = ['name','platform_a','platform_b','is_open','is_active']
     extra = 0
 
-@admin.register(models.RailwayStation)
+
+@admin.register(models.RailStation)
 class RailwayStationConfig(admin.ModelAdmin):
-    search_fields = ['code','name','zone__name','division__name']
-    list_display = ('code','name','division','zone')
+    search_fields = ['code','name','zone__name','div__name']
+    list_display = ('code','name','div','zone')
     fieldsets = (
-        ('Railway Station', {'fields':('zone','division','code','name','category')}),
+        ('Railway Station', {'fields':('zone','div','code','name','cat')}),
     )
     inlines = [ShopAdmin]
 
@@ -61,15 +62,15 @@ admin.site.register(models.ShopType)
 admin.site.register(models.ShopBusinessType)
 
 class OrganizationShopAdmin(admin.TabularInline):
-    model = models.OrganizationShop
+    model = models.OrgShop
     extra = 0
 
 class ShopLicenseAdmin(admin.TabularInline):
-    model = models.ShopLicense
+    model = models.ShopLic
     extra = 0
 
 class ShopFssaiLicenseAdmin(admin.TabularInline):
-    model = models.ShopFssaiLicense
+    model = models.ShopFssaiLic
     extra = 0
 
 class ShopGstAdmin(admin.TabularInline):
@@ -77,11 +78,11 @@ class ShopGstAdmin(admin.TabularInline):
     extra = 0
 
 class ShopInventoryAdmin(admin.TabularInline):
-    model = models.ShopInventory
+    model = models.ShopInv
     extra = 0
 
 class OrganizationShopEmployeeAdmin(admin.TabularInline):
-    model = models.OrganizationShopEmployee
+    model = models.OrgShopEmp
     extra = 0
 
 @admin.register(models.Shop)
@@ -92,12 +93,25 @@ class ShopConfig(admin.ModelAdmin):
         ('PAYMENT', {'fields':('is_cash','is_card','is_upi')}),
         ('STATUS', {'fields':('is_open','is_active')}),
     )
+    raw_id_fields = ['station']
     inlines = [OrganizationShopAdmin,ShopLicenseAdmin,ShopFssaiLicenseAdmin,
                ShopGstAdmin,ShopInventoryAdmin,OrganizationShopEmployeeAdmin]   
 
 
 # Helpine Numbers
+admin.site.register(models.IrHelplineNumber)
 
-admin.site.register(models.IrGRP)
-admin.site.register(models.Train)
-admin.site.register(models.TrainSchedule)
+class TrainScheduleAdmin(admin.TabularInline):
+    model = models.TrainSchedule
+    raw_id_fields = ['station']
+    extra = 0
+
+@admin.register(models.Train)
+class TrainConfig(admin.ModelAdmin):
+    fieldsets = (
+        ('TRAIN', {'fields':('train_no','train_name')}),
+        ('STATION', {'fields':('station_from','station_to','duration')}),
+        ('RUN', {'fields':('run_sun','run_mon','run_tue','run_wed','run_thu','run_fri','run_sat','run_daily')}),
+    )
+    raw_id_fields = ['station_from','station_to']
+    inlines = [TrainScheduleAdmin]

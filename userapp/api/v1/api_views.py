@@ -6,7 +6,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
+from knox.models import AuthToken
+
 from userapp import serializers, models
+from userapp.api import errors as UserError
 
 '''
 PROD
@@ -17,62 +20,69 @@ PROD
 DEV
 '''
 
-failed_response_map = {'error':None}
-response_map = {"data":None}
-
-login_failed_user_not_exist = 'User does not exist. Click on Sign Up button to register.'
-login_failed_user_not_active = 'User not active! Please check registered mail for verification link.'
-login_failed_user_invalid_credentials = 'Invalid username or password'
-
-profile_failed_user_not_exist = 'Something went wrong. Please login again to continue.'
-
-
-class UserRegisterAPIView(generics.CreateAPIView):
+class UserRegisterApi(generics.CreateAPIView):
     serializer_class = serializers.UserRegisterSerializer
 
     def post(self, request, *args, **kwargs):
+        response_data = {}
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        #TODO: Email verification to user
-        return Response(serializer.data,status=status.HTTP_201_CREATED)
+        if serializer.is_valid():
+            serializer.save()
+            #TODO: Email verification to user
+            response_data['user'] = serializer.data
+            response_data['message'] = 'We are happy to on-board you. Please check registered mail for account verification link.'
+            return Response(response_data,status=status.HTTP_201_CREATED)
+        if 'username' in serializer.errors and 'email' in serializer.errors:
+            response_data['error'] = UserError.error_user_username_email_found
+            return Response(response_data, status=status.HTTP_409_CONFLICT)
+        elif 'username' in serializer.errors:
+            response_data['error'] = UserError.error_user_username_found
+            return Response(response_data, status=status.HTTP_409_CONFLICT)
+        elif 'email' in serializer.errors:
+            response_data['error'] = UserError.error_user_email_found
+            return Response(response_data, status=status.HTTP_409_CONFLICT)
+        elif 'password' in serializer.errors:
+            response_data['error'] = UserError.error_user_password_common
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
 
 
-class UserLoginAPIView(generics.GenericAPIView):
+class UserLoginApi(generics.GenericAPIView):
     serializer_class = serializers.UserLoginSerializer
 
     def post(self, request, *args, **kwargs):
+        response_data = {}
         try:
             user = models.User.objects.get(username = request.data['username'])
         except models.User.DoesNotExist:
-            failed_response_map['error'] = login_failed_user_not_exist
-            return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+            response_data['error'] = UserError.error_user_invalid
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
     
         if user.is_active == False:
             #TODO: Email verification to user
-            failed_response_map['error'] = login_failed_user_not_active
-            return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+            response_data['error'] = UserError.error_user_inactive
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
     
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data
             login(request, user)
-            return Response(serializers.UserLoginResponseSerializer(user).data)
-        
-        failed_response_map['error'] = login_failed_user_invalid_credentials
-        return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+            response_data['user'] = serializer.data
+            response_data['token'] = AuthToken.objects.create(user)[1]
+            return Response(response_data, status=status.HTTP_200_OK)
+        response_data['error'] = UserError.error_user_invalid_cred
+        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserProfileAPIView(generics.GenericAPIView, PermissionRequiredMixin):
+class UserProfileApi(generics.RetrieveAPIView, PermissionRequiredMixin):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         try:
-            user = models.User.objects.get(username = request.user)
+            user = models.User.objects.get(username = request.user, is_active=True)
         except models.User.DoesNotExist:
-            failed_response_map['error'] = profile_failed_user_not_exist
-            return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
+            return Response(UserError.error_user_invalid, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = serializers.UserSerializer(user)
-        response_map['data'] = serializer.data
-        return Response(response_map, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)

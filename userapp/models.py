@@ -7,8 +7,6 @@ class CustomAccountManager(BaseUserManager):
         other_fields.setdefault('is_staff', True)
         other_fields.setdefault('is_superuser', True)
         other_fields.setdefault('is_active', True)
-        other_fields.setdefault('is_iDukaan', True)
-        other_fields.setdefault('is_Yatrigan', True)
         return self.create_user(email, username, first_name, last_name, contact_number, password, **other_fields)
 
     def create_user(self, email, username, first_name, last_name, contact_number, password=None, **other_fields):
@@ -25,12 +23,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=60, verbose_name='First Name')
     last_name = models.CharField(max_length=60, verbose_name='Last Name')
     contact_number = models.CharField(max_length=10,verbose_name='Mobile Number')
-
-    is_iDukaan = models.BooleanField(default=False, verbose_name='iDukaan')
-    is_Yatrigan = models.BooleanField(default=False, verbose_name='Yatrigan')
+    pan = models.CharField(max_length=10, blank=True, null=True, verbose_name='PAN')
+    aadhar = models.CharField(max_length=12, blank=True, null=True, verbose_name='Aadhar')
 
     otp = models.CharField(max_length=6, verbose_name='OTP', blank=True, null=True)
-    is_active = models.BooleanField(default=False, verbose_name='Account Status')
+    is_active = models.BooleanField(default=False, verbose_name='User Status')
+    msg = models.CharField(max_length=90, blank=True, null=True, verbose_name='Account Blocked (Reason)')
+    is_verified = models.BooleanField(default=False, verbose_name='User Verified')
     is_staff = models.BooleanField(default=False, verbose_name='Palanhaar Staff')
     is_superuser = models.BooleanField(default=False, verbose_name='Palanhaar Admin')
 
