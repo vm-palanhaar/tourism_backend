@@ -20,7 +20,7 @@ class OrgEmpAdmin(admin.TabularInline):
     extra = 0
 
 class IrOrgShopAdmin(admin.TabularInline):
-    model = IrModel.OrganizationShop
+    model = IrModel.OrgShop
     extra = 0
 
 class OrgStateGstOpsAdmin(admin.TabularInline):

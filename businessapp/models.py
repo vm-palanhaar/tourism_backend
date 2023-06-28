@@ -44,7 +44,7 @@ class OrgEmp(TimestampModel):
 def upload_to_org_gst(instance,filename):
     orgname = instance.org.name
     statename = instance.state.name
-    return f'business/organization/{orgname}/gst/{statename}_{filename}'
+    return f'business/org/{orgname}/gst/{statename}_{filename}'
 
 
 class OrgStateGstOps(TimestampModel):

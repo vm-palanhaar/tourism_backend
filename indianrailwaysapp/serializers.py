@@ -8,109 +8,113 @@ from businessapp import serializers as OrgSerializer
 
 '''
 Common APIs Serializer
-1. RailwayStationListSerializer
-2. ShopInventoryListSerializer
+1. RailStationList
+2. ShopInvList
+3. IrHelplineNumberList
+4. IrGRPList
 
 Yatrigan APIs Serializer
-1. ShopListSerializer_Yatrigan
-2. ShopDetailsSerializer_Yatrigan
+1. ShopList_Yatrigan
+2. ShopInfo_Yatrigan
+3. TrainList_Yatrigan
+4. TrainSchedule_Yatrigan
 
 iDukaan APIs Serializer
-1. ShopBusinessTypeListSerializer_iDukaan
-2. AddShopSerializer_iDukaan
-3. ShopListSerializer_iDukaan
-4. OrganizationShopListSerializer_iDukaan
-5. PatchShopSerializer_iDukaan
-6. ShopDetailsSerializer_iDukaan
-7. AddOrgShopEmpSerializer_iDukaan
-8. OrgShopEmpListSerializer_iDukaan
-9. UpdateOrgShopEmpSerializer_iDukaan
-10. AddShopLicenseSerializer_iDukaan
-11. ShopLicenseSerializer_iDukaan
-12. AddShopFssaiLicenseSerializer_iDukaan
-13. ShopFssaiLicenseSerializer_iDukaan
-14. AddShopInventorySerializer_iDukaan
-15. PatchShopInventorySerializer_iDukaan
+1. ShopBusinessTypeList_iDukaan
+2. AddShop_iDukaan
+3. ShopList_iDukaan
+4. OrgShopList_iDukaan
+5. UpdateShop_iDukaan
+6. ShopInfo_iDukaan
+7. AddOrgShopEmp_iDukaan
+8. OrgShopEmpList_iDukaan
+9. UpdateOrgShopEmp_iDukaan
+10. AddShopLic_iDukaan
+11. ShopLicList_iDukaan
+12. AddShopFssaiLic_iDukaan
+13. ShopFssaiLicList_iDukaan
+14. AddShopInv_iDukaan
+15. PatchShopInv_iDukaan
+16. AddShopGst_iDukaan
+17. ShopGstList_iDukaan
 
 '''
 
-#Common
-class RailwayStationListSerializer(serializers.ModelSerializer):
+class RailStationList(serializers.ModelSerializer):
     station = serializers.SerializerMethodField()
     class Meta:
-        model = models.RailwayStation
+        model = models.RailStation
         fields = ['station']
 
     def get_station(self, instance):
         return f'{instance.name} - {instance.code}'
 
 
-#Common
-class ShopInventoryListSerializer(serializers.ModelSerializer):
+class ShopInvList(serializers.ModelSerializer):
     id = serializers.CharField()
     product= serializers.SerializerMethodField()
     class Meta:
-        model = models.ShopInventory
-        exclude = ['created_at','updated_at','shop']
+        model = models.ShopInv
+        exclude = ['created_at','updated_at','shop','is_stock']
 
     def get_product(self, instance):
         return PcSerializer.ProductListSerializer(instance.product).data
 
 
-#Common
-class IrHelplineNumberSerializer(serializers.ModelSerializer):
+class IrHelplineNumberList(serializers.ModelSerializer):
     id = serializers.CharField()
     class Meta:
         model = models.IrHelplineNumber
         fields = ['id','contact_number','whatsapp','desc','name']
 
 
-#Common
-class IrGRPListSerializer(serializers.ModelSerializer):
+class IrGRPList(serializers.ModelSerializer):
     id = serializers.CharField()
-    state = serializers.SerializerMethodField()
+    state = serializers.CharField()
     class Meta:
-        model = models.IrGRP
+        model = models.IrHelplineNumber
         fields = '__all__'
 
-    def get_state(self, instance):
-        return instance.state.name
 
-
-#Yatrigan
-class ShopListSerializer_Yatrigan(serializers.ModelSerializer):
+class ShopList_Yatrigan(serializers.ModelSerializer):
     id = serializers.CharField()
     class Meta:
         model = models.Shop
         fields = ['id','name','image','platform_a','platform_b']
 
 
-#Yatrigan
-class ShopDetailsSerializer_Yatrigan(serializers.ModelSerializer):
+class ShopInfo_Yatrigan(serializers.ModelSerializer):
     id = serializers.CharField()
     class Meta:
         model = models.Shop
         fields = ['id','name','image','contact_number','station','platform_a','platform_b','is_cash','is_card','is_upi']
 
 
-#iDukaan
-class ShopBusinessTypeListSerializer_iDukaan(serializers.ModelSerializer):
+class ShopBusinessTypeList_iDukaan(serializers.ModelSerializer):
     class Meta:
         model = models.ShopBusinessType
         fields = '__all__'
 
 
-#iDukaan
-class AddShopSerializer_iDukaan(serializers.ModelSerializer):
+class AddShop_iDukaan(serializers.ModelSerializer):
+    id = serializers.CharField(read_only=True)
     image = serializers.ImageField(write_only=True)
-    organization = serializers.CharField(required=True, write_only=True)
+    contact_number = serializers.CharField(write_only=True)
+    lat = serializers.CharField(write_only=True)
+    lon = serializers.CharField(write_only=True)
+    platform_a = serializers.CharField(write_only=True, allow_blank=True, allow_null=True)
+    platform_b = serializers.CharField(write_only=True, allow_blank=True, allow_null=True)
+    is_cash = serializers.BooleanField(write_only=True)
+    is_card = serializers.BooleanField(write_only=True)
+    is_upi = serializers.BooleanField(write_only=True)
+    org = serializers.CharField(required=True, write_only=True)
     lic_number = serializers.CharField(required=True, write_only=True)
-    lic_cert = serializers.FileField(required=True, write_only=True)
+    lic_doc = serializers.FileField(required=True, write_only=True)
     lic_start_date = serializers.DateField(required=True, write_only=True)
     lic_end_date = serializers.DateField(required=True, write_only=True)
     class Meta:
         model = models.Shop
-        exclude = ['created_at','updated_at','is_open','is_active','id']
+        exclude = ['created_at','updated_at','is_open','is_active']
 
     def create(self, validated_data):
         shop = models.Shop.objects.create(
@@ -132,58 +136,59 @@ class AddShopSerializer_iDukaan(serializers.ModelSerializer):
             is_card = validated_data['is_card'],
             is_upi = validated_data['is_upi']
         )
-        shop.save()
 
-        shopLic = models.ShopLicense.objects.create(
+        shopLic = models.ShopLic.objects.create(
             shop = shop,
-            registration = validated_data['lic_number'],
-            certificate = validated_data['lic_cert'],
+            reg_no = validated_data['lic_number'],
+            doc = validated_data['lic_doc'],
             start_date = validated_data['lic_start_date'],
             end_date = validated_data['lic_end_date'],
-            is_current = True,
+            is_current = False,
             is_valid = False
         )
         shopLic.save()
 
-        org = OrgModel.Org.objects.get(id=validated_data['organization'])
-        orgShop = models.OrganizationShop.objects.create(
-            organization = org,
+        org = OrgModel.Org.objects.get(id=validated_data['org'])
+        orgShop = models.OrgShop.objects.create(
+            org = org,
             shop = shop
         )
         orgShop.save()
 
-        orgShopEmp = models.OrganizationShopEmployee.objects.create(
-            organization = org,
+        orgShopEmp = models.OrgShopEmp.objects.create(
+            org = org,
             shop = shop,
             user = self.context.get('user'),
             is_manager = True
         )
         orgShopEmp.save()
 
+        shop.save()
+
         return shop
 
 
-class ShopListSerializer_iDukaan(serializers.ModelSerializer):
+class ShopList_iDukaan(serializers.ModelSerializer):
     id = serializers.CharField()
     class Meta:
         model = models.Shop
         fields = ['id','name','image','station','platform_a','platform_b','is_open','is_active']
 
 
-class OrganizationShopListSerializer_iDukaan(serializers.ModelSerializer):
+class OrgShopList_iDukaan(serializers.ModelSerializer):
     id = serializers.CharField()
     class Meta:
         model = models.Shop
         fields = ['id','name','image','station','platform_a','platform_b','is_open', 'is_active']
 
 
-class PatchShopSerializer_iDukaan(serializers.ModelSerializer):
+class UpdateShop_iDukaan(serializers.ModelSerializer):
     class Meta:
         model = models.Shop
         fields = ['id','contact_number','is_open','is_cash','is_card','is_upi']
 
 
-class ShopDetailsSerializer_iDukaan(serializers.ModelSerializer):
+class ShopInfo_iDukaan(serializers.ModelSerializer):
     id = serializers.CharField()
     business_type = serializers.CharField()
     shop_type = serializers.CharField()
@@ -192,17 +197,18 @@ class ShopDetailsSerializer_iDukaan(serializers.ModelSerializer):
         exclude = ['created_at','updated_at','lat','lon']
 
 
-class AddOrgShopEmpSerializer_iDukaan(serializers.ModelSerializer):
+class AddOrgShopEmp_iDukaan(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, read_only=True)
-    empid = serializers.CharField()
+    user = serializers.CharField(required=False, read_only=True)
+    empId = serializers.CharField(required=True, write_only=True)
     class Meta:
-        model = models.OrganizationShopEmployee
-        fields = ['id','empid','shop','is_manager']
+        model = models.OrgShopEmp
+        fields = ['id','empId','shop','is_manager','user']
 
     def create(self, validated_data):
-        org_emp = OrgModel.OrgEmp.objects.get(id=validated_data['empid'])
-        employee = models.OrganizationShopEmployee.objects.create(
-            organization = org_emp.org,
+        org_emp = OrgModel.OrgEmp.objects.get(id=validated_data['empId'])
+        employee = models.OrgShopEmp.objects.create(
+            org = org_emp.org,
             user = org_emp.user,
             shop = validated_data['shop'],
             is_manager = validated_data['is_manager'],
@@ -211,108 +217,85 @@ class AddOrgShopEmpSerializer_iDukaan(serializers.ModelSerializer):
         return employee
     
 
-class OrgShopEmpListSerializer_iDukaan(serializers.ModelSerializer):
+class OrgShopEmpList_iDukaan(serializers.ModelSerializer):
     id = serializers.CharField()
-    organization = serializers.SerializerMethodField()
-    shop = serializers.SerializerMethodField()
     name = serializers.SerializerMethodField()
     class Meta:
-        model = models.OrganizationShopEmployee
-        exclude = ['created_at','updated_at','user']
+        model = models.OrgShopEmp
+        exclude = ['created_at','updated_at','user','org','shop']
     
     def get_name(self, instance):
-        user = UserModel.User.objects.get(username=instance.user)
-        return f'{user.first_name} {user.last_name}'
-    
-    def get_organization(self, instance):
-        return f'{instance.organization.id}'
-    
-    def get_shop(self, instance):
-        return f'{instance.shop.id}' 
+        return f'{instance.user.first_name} {instance.user.last_name}'
 
 
-class UpdateOrgShopEmpSerializer_iDukaan(serializers.ModelSerializer):
+class UpdateOrgShopEmp_iDukaan(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, read_only=True)
     class Meta:
-        model = models.OrganizationShopEmployee
+        model = models.OrgShopEmp
         fields = ['id','is_manager']
 
 
-class AddShopLicenseSerializer_iDukaan(serializers.ModelSerializer):
+class AddShopLic_iDukaan(serializers.ModelSerializer):
+    doc = serializers.FileField(write_only=True)
     class Meta:
-        model = models.ShopLicense
-        exclude = ['created_at','updated_at']
+        model = models.ShopLic
+        exclude = ['created_at','updated_at','is_valid']
 
 
-class ShopLicenseSerializer_iDukaan(serializers.ModelSerializer):
+class ShopLicList_iDukaan(serializers.ModelSerializer):
     id = serializers.CharField()
-    shop = serializers.SerializerMethodField()
-    document = serializers.SerializerMethodField()
+    docType = serializers.SerializerMethodField()
     class Meta:
-        model = models.ShopLicense
-        exclude = ['created_at','updated_at','certificate']
+        model = models.ShopLic
+        exclude = ['created_at','updated_at','doc','shop']
 
-    def get_shop(self, instance):
-        return f'{instance.shop.id}'
-
-    def get_document(self,instance):
+    def get_docType(self,instance):
         if instance.end_date == None:
             return 'Notice'
         return 'License'
     
 
-class AddShopFssaiLicenseSerializer_iDukaan(serializers.ModelSerializer):
+class AddShopFssaiLic_iDukaan(serializers.ModelSerializer):
+    doc = serializers.FileField(write_only=True)
     class Meta:
-        model = models.ShopFssaiLicense
-        exclude = ['created_at','updated_at']
+        model = models.ShopFssaiLic
+        exclude = ['created_at','updated_at','is_current','is_valid']
 
 
-class ShopFssaiLicenseSerializer_iDukaan(serializers.ModelSerializer):
+class ShopFssaiLicList_iDukaan(serializers.ModelSerializer):
     id = serializers.CharField()
-    shop = serializers.SerializerMethodField()
     class Meta:
-        model = models.ShopFssaiLicense
-        exclude = ['created_at','updated_at','certificate']
-
-    def get_shop(self, instance):
-        return f'{instance.shop.id}'
+        model = models.ShopFssaiLic
+        exclude = ['created_at','updated_at','doc','shop']
 
 
-class AddShopInventorySerializer_iDukaan(serializers.ModelSerializer):
+class AddShopInv_iDukaan(serializers.ModelSerializer):
     class Meta:
-        model = models.ShopInventory
-        fields = '__all__'
+        model = models.ShopInv
+        exclude = ['created_at','updated_at','is_stock']
 
 
-class PatchShopInventorySerializer_iDukaan(serializers.ModelSerializer):
+class PatchShopInv_iDukaan(serializers.ModelSerializer):
     class Meta:
-        model = models.ShopInventory
+        model = models.ShopInv
         fields = ['id','is_stock']
 
 
-class AddIrShopGstSerializer_iDukaan(serializers.ModelSerializer):
+class AddShopGst_iDukaan(serializers.ModelSerializer):
     class Meta:
         model = models.ShopGst
         exclude = ['created_at','updated_at']
 
 
-class ShopGstSerializer_iDukaan(serializers.ModelSerializer):
+class ShopGstList_iDukaan(serializers.ModelSerializer):
     id = serializers.CharField()
-    org = serializers.SerializerMethodField()
-    org_st_gst = OrgSerializer.OrgStateGstOpsListSerializer()
-    shop = serializers.SerializerMethodField()
+    gst = OrgSerializer.OrgStateGstOpsListSerializer()
     class Meta:
         model = models.ShopGst
         exclude = ['created_at','updated_at']
-
-    def get_org(self, instance):
-        return f'{instance.org.id}'
-
-    def get_shop(self, instance):
-        return f'{instance.shop.id}'
     
 
-class TrainListSerializer(serializers.ModelSerializer):
+class TrainList_Yatrigan(serializers.ModelSerializer):
     train = serializers.SerializerMethodField()
     class Meta:
         model = models.Train
@@ -322,7 +305,7 @@ class TrainListSerializer(serializers.ModelSerializer):
         return f'{instance.train_no} - {instance.train_name}'
 
 
-class TrainScheduleStationSerializer(serializers.ModelSerializer):
+class _TrainScheduleStationList(serializers.ModelSerializer):
     station = serializers.SerializerMethodField()
     class Meta:
         model = models.TrainSchedule
@@ -332,7 +315,7 @@ class TrainScheduleStationSerializer(serializers.ModelSerializer):
         return f'{instance.station.name} - {instance.station.code}'
     
 
-class TrainScheduleSerializer(serializers.ModelSerializer):
+class TrainSchedule_Yatrigan(serializers.ModelSerializer):
     station_from = serializers.SerializerMethodField()
     station_to = serializers.SerializerMethodField()
     stations = serializers.SerializerMethodField()
@@ -350,7 +333,7 @@ class TrainScheduleSerializer(serializers.ModelSerializer):
 
     def get_stations(self, instance):
         schedule = models.TrainSchedule.objects.filter(train=instance)
-        serializer = TrainScheduleStationSerializer(schedule, many=True)
+        serializer = _TrainScheduleStationList(schedule, many=True)
         return serializer.data
     
     def get_run_status(self, instance):
@@ -370,5 +353,4 @@ class TrainScheduleSerializer(serializers.ModelSerializer):
         if instance.run_sat:
             days.append('SAT')
         return days
-
 

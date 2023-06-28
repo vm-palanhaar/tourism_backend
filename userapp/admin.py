@@ -10,7 +10,7 @@ class OrganizationEmployeeAdmin(admin.TabularInline):
     extra = 0
 
 class OrganizationShopEmployeeAdmin(admin.TabularInline):
-    model = IrModel.OrganizationShopEmployee
+    model = IrModel.OrgShopEmp
     extra = 0
 
 

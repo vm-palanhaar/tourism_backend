@@ -1,5 +1,4 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.core.mail import send_mail
 
 from rest_framework import generics, status, viewsets
 from rest_framework.response import Response
@@ -12,6 +11,7 @@ from businessapp import serializers as OrgSerializer
 
 from businessapp.api import errors as OrgError
 from userapp.api import errors as UserError
+from apiutil import errors as UtilError
 
 '''
 PROD
@@ -37,7 +37,7 @@ def validate_org_emp(user, org):
     except OrgModel.OrgEmp.DoesNotExist:
         return -1
     
-def validate_emp(user, org):
+def validate_emp_return(user, org):
         try:
             return OrgModel.OrgEmp.objects.get(user=user, org=org)
         except OrgModel.OrgEmp.DoesNotExist:
@@ -85,7 +85,7 @@ class OrgApi(viewsets.ViewSet, PermissionRequiredMixin):
                 orgs.append(OrgSerializer.OrgListSerializer(org.org).data)
             response_data['orgList'] = orgs
             return Response(response_data, status=status.HTTP_200_OK)
-        response_data['error'] = OrgError.error_business_org_emp_not_found_request_user
+        response_data['error'] = OrgError.business_org_list_not_found
         return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
     
     def retrieve(self, request, *args, **kwargs):
@@ -95,7 +95,7 @@ class OrgApi(viewsets.ViewSet, PermissionRequiredMixin):
             org = OrgModel.Org.objects.get(id = kwargs['orgId'])
             serializer = OrgSerializer.OrgInfoSerializer(org)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        response_data['error'] = OrgError.error_business_org_emp_not_found_request_user
+        response_data['error'] = OrgError.business_org_list_not_found
         return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -107,8 +107,8 @@ class OrgEmpApi(viewsets.ViewSet, PermissionRequiredMixin):
         response_data['orgId'] = kwargs['orgId']
         # Validate OrgId from headers and url arguments
         if kwargs['orgId'] == request.data['org']:
-            org_emp = validate_emp(request.user, kwargs['orgId'])
-            if org_emp.is_manager == True:
+            org_emp = validate_emp_return(request.user, kwargs['orgId'])
+            if org_emp != None and org_emp.is_manager == True:
                 try:
                     emp = OrgModel.OrgEmp.objects.get(user = request.data['user'], org = request.data['org'])
                     OrgError.error_org_add_emp_found['message'] = f'{emp.user.first_name} {emp.user.last_name} is already associated with {emp.org.name}'
@@ -136,7 +136,7 @@ class OrgEmpApi(viewsets.ViewSet, PermissionRequiredMixin):
                     elif user.is_staff or user.is_superuser or '@palanhaar.in' in request.data['user']:
                         request.user.is_active = False
                         request.user.save()
-                        response_data['error'] = OrgError.error_bad_action
+                        response_data['error'] = UtilError.error_bad_action_user
                         return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
                     serializer = OrgSerializer.AddOrgEmpSerializer(data=request.data)
                     if serializer.is_valid():
@@ -145,27 +145,28 @@ class OrgEmpApi(viewsets.ViewSet, PermissionRequiredMixin):
                         response_data['message'] = f'{user.first_name} {user.last_name} is associated with {org_emp.org.name}'
                         return Response(response_data, status=status.HTTP_201_CREATED)
                     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            elif org_emp.is_manager == False:
+            elif org_emp != None and org_emp.is_manager == False:
                 response_data['error'] = OrgError.error_business_org_emp_not_mng
                 return error_response_400(response_data) 
-            response_data['error'] = OrgError.error_business_org_emp_not_found_request_user
+            response_data['error'] = OrgError.business_org_list_not_found
             return error_response_400(response_data)
         request.user.is_active = False
         request.user.save()
-        response_data['error'] = OrgError.error_bad_action
+        response_data['error'] = UtilError.error_bad_action_user
         return error_response_400(response_data)
 
     def list(self, request, *args, **kwargs):
         response_data = {}
         response_data['orgId'] = kwargs['orgId']
-        org_emp = validate_org_emp(request.user, kwargs['orgId'])
-        if org_emp == 1 or org_emp == 0:
+        org_emp = validate_emp_return(request.user, kwargs['orgId'])
+        if org_emp != None:
             employees = OrgModel.OrgEmp.objects.filter(org=kwargs['orgId'])
             serializer = OrgSerializer.OrgEmpListSerializer(employees, many=True)
+            response_data['orgName'] = org_emp.org.name
             response_data['orgEmpList'] = serializer.data
             return Response(response_data, status=status.HTTP_200_OK)
         
-        response_data['error'] = OrgError.error_business_org_emp_not_found_request_user
+        response_data['error'] = OrgError.business_org_list_not_found
         return error_response_400(response_data)
     
     def partial_update(self, request, *args, **kwargs):
@@ -192,11 +193,11 @@ class OrgEmpApi(viewsets.ViewSet, PermissionRequiredMixin):
             elif org_emp == 0:
                 response_data['error'] = OrgError.error_business_org_emp_not_mng
                 return error_response_400(response_data)
-            response_data['error'] = OrgError.error_business_org_emp_not_found_request_user
+            response_data['error'] = OrgError.business_org_list_not_found
             return error_response_400(response_data)
         request.user.is_active = False
         request.user.save()
-        response_data['error'] = OrgError.error_bad_action
+        response_data['error'] = UtilError.error_bad_action_user
         return error_response_400(response_data)
 
     def destroy(self, request, *args, **kwargs):
@@ -220,11 +221,11 @@ class OrgEmpApi(viewsets.ViewSet, PermissionRequiredMixin):
             elif org_emp == 0:
                 response_data['error'] = OrgError.error_business_org_emp_not_mng
                 return error_response_400(response_data)
-            response_data['error'] = OrgError.error_business_org_emp_not_found_request_user
+            response_data['error'] = OrgError.business_org_list_not_found
             return error_response_400(response_data)
         request.user.is_active = False
         request.user.save()
-        response_data['error'] = OrgError.error_bad_action
+        response_data['error'] = UtilError.error_bad_action_user
         return error_response_400(response_data)
 
 
@@ -253,18 +254,20 @@ class OrgStateGstApi(viewsets.ViewSet, PermissionRequiredMixin):
             elif org_emp == 0:
                 response_data['error'] = OrgError.error_business_org_emp_not_mng
                 return error_response_400(response_data)
-            response_data['error'] = OrgError.error_business_org_emp_not_found_request_user
+            response_data['error'] = OrgError.business_org_list_not_found
             return error_response_400(response_data)
         request.user.is_active = False
         request.user.save()
-        response_data['error'] = OrgError.error_bad_action
+        response_data['error'] = UtilError.error_bad_action_user
         return error_response_400(response_data)
 
     def list(self, request, *args, **kwargs):
         response_data = {}
         response_data['orgId'] = kwargs['orgId']
-        org_emp = validate_org_emp(request.user, kwargs['orgId'])
-        if org_emp == 1:
+        emp = validate_emp_return(request.user, kwargs['orgId'])
+        if emp != None:
+            response_data['orgName'] = emp.org.name
+        if emp != None and emp.is_manager == True: 
             ops = OrgModel.OrgStateGstOps.objects.filter(org = kwargs['orgId'])
             if ops.count() > 0:
                 serializer = OrgSerializer.OrgStateGstOpsListSerializer(ops, many=True)
@@ -272,9 +275,9 @@ class OrgStateGstApi(viewsets.ViewSet, PermissionRequiredMixin):
                 return Response(response_data, status=status.HTTP_200_OK)
             response_data['error'] = OrgError.error_business_org_ops_not_found
             return error_response_400(response_data)
-        elif org_emp == 0:
+        elif emp != None and emp.is_manager == False:
             response_data['error'] = OrgError.error_business_org_emp_not_mng
             return error_response_400(response_data)
-        response_data['error'] = OrgError.error_business_org_emp_not_found_request_user
+        response_data['error'] = OrgError.business_org_list_not_found
         return error_response_400(response_data)
 

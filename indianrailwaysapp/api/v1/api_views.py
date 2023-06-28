@@ -3,21 +3,14 @@ from rest_framework.response import Response
 
 from indianrailwaysapp import serializers as IRSerializer
 from indianrailwaysapp import models as IRModel
-from geographyapp.api.v1 import api_views as GeoV1
 
 
-failed_response_map = {'error':None}
 
-def error_response(error):
-    failed_response_map['error'] = error
-    return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
-
-
-class RailwayStationListAPIView(generics.GenericAPIView):
-    serializer_class = IRSerializer.RailwayStationListSerializer
+class RailStationListApi(generics.GenericAPIView):
+    serializer_class = IRSerializer.RailStationList
 
     def get(self, request, *args, **kwargs):
-        stations = IRModel.RailwayStation.objects.all()
+        stations = IRModel.RailStation.objects.all()
         serializer = self.get_serializer(stations, many=True)
         stations = []
         for station in serializer.data:
@@ -29,8 +22,8 @@ class RailwayStationListAPIView(generics.GenericAPIView):
         return Response(response_data, status=status.HTTP_200_OK)
     
 
-class IrGRPListAPIView(generics.ListAPIView):
-    serializer_class = IRSerializer.IrGRPListSerializer
+class IrGRPListApi(generics.ListAPIView):
+    serializer_class = IRSerializer.IrGRPList
 
     def get(self, request, *args, **kwargs):
         numbers = IRModel.IrHelplineNumber.objects.filter(state__isnull=False)
@@ -38,8 +31,8 @@ class IrGRPListAPIView(generics.ListAPIView):
         response_data = serializer.data
         return Response(response_data, status=status.HTTP_200_OK)
     
-class IrHelplineListAPIView(generics.ListAPIView):
-    serializer_class = IRSerializer.IrHelplineNumberSerializer
+class IrHelplineListApi(generics.ListAPIView):
+    serializer_class = IRSerializer.IrHelplineNumberList
 
     def get(self, request, *args, **kwargs):
         numbers = IRModel.IrHelplineNumber.objects.filter(state__isnull=True)

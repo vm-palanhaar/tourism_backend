@@ -52,7 +52,7 @@ class OrgListSerializer(serializers.ModelSerializer):
         exclude = ['reg_no','doc','created_at','updated_at']
 
     def get_irShops(self, instance):
-        shops = IRModel.OrganizationShop.objects.filter(organization=instance).count()
+        shops = IRModel.OrgShop.objects.filter(org=instance).count()
         return shops
 
 
@@ -69,7 +69,7 @@ class OrgInfoSerializer(serializers.ModelSerializer):
         return OrgModel.OrgEmp.objects.filter(org=instance).count()
     
     def get_irShops(self, instance):
-        shops = IRModel.OrganizationShop.objects.filter(organization=instance).count()
+        shops = IRModel.OrgShop.objects.filter(org=instance).count()
         return shops
     
 
