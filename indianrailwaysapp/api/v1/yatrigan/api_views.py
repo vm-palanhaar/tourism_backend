@@ -68,12 +68,10 @@ class TrainScheduleApi(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         if request.headers['train'] == None:
             return response_400(UtilError.error_bad_action_anon)
-        
         try:
             train = IRModel.Train.objects.get(train_no=request.headers['train'])
         except IRModel.Train.DoesNotExist:
             return response_400(IrError.train_not_found)
-        
         serializers = self.get_serializer(train)
         return response_200(serializers.data)
 
@@ -86,7 +84,8 @@ class ShopListApi(generics.ListAPIView):
         response_data['station'] = kwargs['station']
         shops = IRModel.Shop.objects.filter(station=kwargs['station'], is_active=True, is_open=True)
         if shops.count() == 0:
-            IrError.shop_not_found['message'] = IrError.shop_not_found['message'].format(kwargs['station'])
+            error_map = IrError.shop_not_found
+            error_map['message'] = error_map['message'].format(kwargs['station'])
             response_data['error'] = IrError.shop_not_found
             return response_400(response_data)
         serializer = self.get_serializer(shops, many=True)
@@ -100,13 +99,14 @@ class ShopInvListApi(generics.ListAPIView):
     def get(self, request, *args, **kwargs):
         shop = IRModel.Shop.objects.filter(station=kwargs['station'], id=kwargs['shopId'], is_active=True, is_open=True)
         if shop.count() == 0:
-          IrError.shop_not_found = IrError.shop_not_found['message'].format(kwargs['station'])
-          response_data = {
-            "shop" : kwargs['shopId'],
-            "station" : kwargs['station'],
-            "error" : IrError.shop_not_found
-          }
-          return response_400(response_data)
+            error_map = IrError.shop_not_found
+            error_map = error_map['message'].format(kwargs['station'])
+            response_data = {
+                "shop" : kwargs['shopId'],
+                "station" : kwargs['station'],
+                "error" : error_map
+            }
+            return response_400(response_data)
         
         shop_invs = IRModel.ShopInv.objects.filter(shop=kwargs['shopId'], is_stock=True)
         if shop_invs.count() == 0:
@@ -133,11 +133,12 @@ class ShopInfoApi(generics.RetrieveAPIView):
         try:
           shop = IRModel.Shop.objects.get(station=kwargs['station'], id=kwargs['shopId'], is_active=True, is_open=True)
         except IRModel.Shop.DoesNotExist:
-          IrError.shop_not_found = IrError.shop_not_found['message'].format(kwargs['station'])
-          response_data = {
-              'error' : IrError.shop_not_found
-          }
-          return response_400(response_data)
+            error_map = IrError.shop_not_found
+            error_map = error_map['message'].format(kwargs['station'])
+            response_data = {
+                'error' : error_map
+            }
+            return response_400(response_data)
         
         serializer = self.get_serializer(shop)
         return response_200(serializer.data)
