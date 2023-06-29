@@ -143,7 +143,6 @@ class AddShop_iDukaan(serializers.ModelSerializer):
             doc = validated_data['lic_doc'],
             start_date = validated_data['lic_start_date'],
             end_date = validated_data['lic_end_date'],
-            is_current = False,
             is_valid = False
         )
         shopLic.save()
