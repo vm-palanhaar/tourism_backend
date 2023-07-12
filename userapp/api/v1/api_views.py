@@ -25,6 +25,9 @@ class UserRegisterApi(generics.CreateAPIView):
 
     def post(self, request, *args, **kwargs):
         response_data = {}
+        if request.data['username'] == None or request.data['email'] == None or request.data['password'] == None:
+            response_data['error'] = UserError.error_user_fields_empty
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -43,7 +46,7 @@ class UserRegisterApi(generics.CreateAPIView):
             return Response(response_data, status=status.HTTP_409_CONFLICT)
         elif 'password' in serializer.errors:
             response_data['error'] = UserError.error_user_password_common
-            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+            return Response(response_data, status=status.HTTP_409_CONFLICT)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
 

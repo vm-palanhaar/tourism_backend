@@ -1,3 +1,8 @@
+error_user_fields_empty = {
+    'code' : 'userFieldsEmpty',
+    'message' : 'Please fill the required user information!'
+}
+
 error_user_username_found = {
     'code' : 'userUsernameFound',
     'message' : 'Username already exists'
