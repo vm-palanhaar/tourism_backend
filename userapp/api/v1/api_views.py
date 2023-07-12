@@ -25,7 +25,7 @@ class UserRegisterApi(generics.CreateAPIView):
 
     def post(self, request, *args, **kwargs):
         response_data = {}
-        if request.data['username'] == None or request.data['email'] == None or request.data['password'] == None:
+        if 'username' not in request.data or 'email' not in request.data == None:
             response_data['error'] = UserError.error_user_fields_empty
             return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(data=request.data)
