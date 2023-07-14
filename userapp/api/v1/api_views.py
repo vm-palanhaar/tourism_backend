@@ -59,12 +59,12 @@ class UserLoginApi(generics.GenericAPIView):
         try:
             user = models.User.objects.get(username = request.data['username'])
         except models.User.DoesNotExist:
-            response_data['error'] = UserError.error_user_invalid
+            response_data['error'] = UserError.userInvalid()
             return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
     
         if user.is_active == False:
             #TODO: Email verification to user
-            response_data['error'] = UserError.error_user_inactive
+            response_data['error'] = UserError.userInActive();
             return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
     
         serializer = self.get_serializer(data=request.data)
@@ -85,7 +85,7 @@ class UserProfileApi(generics.RetrieveAPIView, PermissionRequiredMixin):
         try:
             user = models.User.objects.get(username = request.user, is_active=True)
         except models.User.DoesNotExist:
-            return Response(UserError.error_user_invalid, status=status.HTTP_400_BAD_REQUEST)
+            return Response(UserError.userInvalid(), status=status.HTTP_400_BAD_REQUEST)
 
         serializer = serializers.UserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)

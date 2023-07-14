@@ -23,27 +23,31 @@ error_user_password_common = {
     'message' : 'This password is too common.'
 }
 
-error_user_invalid = {
-    'code' : 'userInvalid',
-    'message' : 'User does not exist!'
-}
+def userInvalid(): 
+    return {
+        'code' : 'userInvalid',
+        'message' : 'User does not exist!'
+    }
 
 error_user_invalid_cred = {
     'code' : 'user_invalid_cred',
     'message' : 'Username or password is incorrect.'
 }
 
-error_user_inactive = {
-    'code' : 'userInActive',
-    'message' : ''
-}
+def userInActive(): 
+    return {
+        'code' : 'userInActive',
+        'message' : 'This account is not yet active.'
+    }
 
-error_user_notverified = {
-    'code' : 'userNotVerified',
-    'message' : ''
-}
+def userNotVerified(): 
+    return {
+        'code' : 'userNotVerified',
+        'message' : 'This account is not yet verified the identity.'
+    }
 
-error_user_inactive_notverified = {
-    'code' : 'userInActiveNotVerified',
-    'message' : ''
-}
+def userInActiveNotVerified():
+    return {
+        'code' : 'userInActiveNotVerified',
+        'message' : 'This account is not yet active, and not yet verified the identity.'
+    }

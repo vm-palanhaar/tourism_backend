@@ -121,7 +121,7 @@ class OrgShopApi(viewsets.ViewSet, PermissionRequiredMixin):
                         return Response(response_data, status=status.HTTP_201_CREATED)
                     return response_400(serializer.errors)
             elif emp == emp_non_manager:
-                response_data['error'] = OrgError.error_business_org_emp_not_mng
+                response_data['error'] = OrgError.businessOrgEmpNotMng
                 return response_400(response_data)
             response_data['error'] = OrgError.org_emp_self_not_found
             return response_400(response_data)
@@ -230,7 +230,7 @@ class OrgShopEmpAPi(viewsets.ViewSet, PermissionRequiredMixin):
                 try:
                     org_emp = OrgModel.OrgEmp.objects.get(id=request.data['empId'])
                 except OrgModel.OrgEmp.DoesNotExist:
-                    response_data['error'] = OrgError.error_business_org_emp_not_found
+                    response_data['error'] = OrgError.businessOrgEmpNotFound()
                     return response_400(response_data)
                 try:
                     shop_emp = ShopModel.OrgShopEmp.objects.get(user = org_emp.user, org = org_emp.org, shop = request.data['shop'])
@@ -541,7 +541,7 @@ class ShopGstPostGetAPIViewset(viewsets.ViewSet, PermissionRequiredMixin):
                     try:
                         OrgModel.OrgStateGstOps.objects.get(id=request.data['gst'])
                     except OrgModel.OrgStateGstOps.DoesNotExist:
-                        response_data['error'] = OrgError.error_business_org_ops_not_found
+                        response_data['error'] = OrgError.businessOrgOpsNotFound()
                         return response_409(response_data)
                     serializer = ShopSerializer.AddShopGst_iDukaan(data=request.data)
                     if serializer.is_valid():
