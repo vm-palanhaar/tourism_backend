@@ -64,7 +64,7 @@ def businessOrgEmpNotFound(orgName):
 def businessOrgEmpSelfUd(orgName):
     return {
         'error' : {
-            'code' : 'businessOrgEmpSelfUd',
+            'code' : 'businessOrgEmpSelfUd_iDukaan',
             'message' : f'You are not allowed to update or delete yourself from {orgName}!'
         }
     }

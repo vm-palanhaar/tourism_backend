@@ -6,8 +6,10 @@ def badActionUser(request, reason):
     request.user.msg = reason
     request.user.save()
     return {
-        'code' : 'badActionUser',
-        'message' : 'Bad Action performed! Your account will be de-activated. Please check your mail for further information.'
+        'error' : {
+            'code' : 'badActionUser',
+            'message' : 'Bad Action performed! Your account will be de-activated. Please check your mail for further information.'
+        }
     }
 
 error_bad_action_anon = {

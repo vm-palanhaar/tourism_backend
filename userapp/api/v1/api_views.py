@@ -64,7 +64,7 @@ class UserLoginApi(generics.GenericAPIView):
     
         if user.is_active == False:
             #TODO: Email verification to user
-            response_data['error'] = UserError.userInActive();
+            response_data['error'] = UserError.userInActive()
             return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
     
         serializer = self.get_serializer(data=request.data)
