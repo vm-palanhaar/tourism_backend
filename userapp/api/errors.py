@@ -1,7 +1,7 @@
 def userEmptyFields():
     return {
         'error' : {
-             'code' : 'userFieldsEmpty',
+            'code' : 'userFieldsEmpty',
             'message' : 'Please fill the required user information!'
         }
     }
@@ -64,12 +64,16 @@ def userInActive():
 
 def userNotVerified(): 
     return {
-        'code' : 'userNotVerified',
-        'message' : 'This account is not yet verified the identity.'
+        'error' : {
+            'code' : 'userNotVerified',
+            'message' : 'This account is not yet verified the identity.'
+        }
     }
 
 def userInActiveNotVerified():
     return {
-        'code' : 'userInActiveNotVerified',
-        'message' : 'This account is not yet active, and not yet verified the identity.'
+        'error' : {
+            'code' : 'userInActiveNotVerified',
+            'message' : 'This account is not yet active, and not yet verified the identity.'
+        }
     }

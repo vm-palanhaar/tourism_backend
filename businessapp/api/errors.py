@@ -1,9 +1,17 @@
-from businessapp import models as OrgModel
+def businessSrlError():
+    return {
+        'error' : {
+            'code' : '',
+            'message' : ''
+        }
+    }
 
 def businessOrgFound():
     return {
-        'code' : 'bussinessOrgFound_iDukaan',
-        'message' : 'The registration number you entered already exists in our iDukaan app. Please double-check the registration number and try again. If you need further information or assistance, we recommend raising a request for more information.'
+        'error' : {
+            'code' : 'bussinessOrgFound_iDukaan',
+            'message' : 'The registration number you entered already exists in our iDukaan app. Please double-check the registration number and try again. If you need further information or assistance, we recommend raising a request for more information.'
+        }
     }
 
 def businessOrgNotVerified(orgName):
@@ -16,10 +24,12 @@ def businessOrgNotVerified(orgName):
 
 def businessOrgListNotFound():
     return {
-        'code' : 'bussinessOrgListNotFound_iDukaan',
-        'message' : 'You are not associated with organization. You can follow any one of the following point:\n\n'\
-                    '- Add organization.\n'\
-                    '- Request your manager to add you in organization.'
+        'error' : {
+            'code' : 'bussinessOrgListNotFound_iDukaan',
+            'message' : 'You are not associated with organization. You can follow any one of the following point:\n\n'\
+                        '- Add organization.\n'\
+                        '- Request your manager to add you in organization.'
+        }
     }
 
 def businessOrgEmpNotMng(orgName):
@@ -30,26 +40,19 @@ def businessOrgEmpNotMng(orgName):
         }
     }
 
-def businessOrgEmpSelfNotFound(orgId):
-    response_data = {
+def businessOrgEmpSelfNotFound():
+    return {
         'error' : {
             'code' : 'businessSelfOrgEmpNotFound_iDukaan',
-            'message' : 'You are no longer associated with {0}.'
+            'message' : 'You are no longer associated with organization.'
         }
     }
-    try:
-        org = OrgModel.Org.objects.get(id = orgId)
-        response_data['error']['message'] = response_data['error']['message'].format(org.name)
-        return response_data
-    except OrgModel.Org.DoesNotExist:
-        response_data['error']['message'] = response_data['error']['message'].format('organization')
-        return response_data
 
 def businessOrgEmpFound(emp): 
     return {
         'error' : {
             'code' : 'businessOrgEmpFound_iDukaan',
-        'message' : f'{emp.user.first_name} {emp.user.last_name} is already associated with {emp.org.name}'
+            'message' : f'{emp.user.first_name} {emp.user.last_name} is already associated with {emp.org.name}'
         }
     }
 
@@ -73,7 +76,7 @@ def businessOrgOpsFound():
     return{
         'error' : {
             'code' : 'businessOrgOpsFound_iDukaan',
-        'message' : 'The registration number you entered already exists in our iDukaan app. Please double-check the registration number and try again. If you need further information or assistance, we recommend raising a request for more information.'
+            'message' : 'The registration number you entered already exists in our iDukaan app. Please double-check the registration number and try again. If you need further information or assistance, we recommend raising a request for more information.'
         }
     }
 
