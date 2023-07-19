@@ -99,8 +99,10 @@ def irOrgShopEmpNotFound(empName, shopName):
 
 def irOrgShopEmpSelfUd(shopName):
     return {
-        'code' : 'irOrgShopEmpSelfUd_iDukaan',
-        'message' : f'You are not allowed to update or delete yourself from {shopName}'
+        'error' : {
+            'code' : 'irOrgShopEmpSelfUd_iDukaan',
+            'message' : f'You are not allowed to update or delete yourself from {shopName}'
+        }
     }
 
 def irShopLicNotFound():

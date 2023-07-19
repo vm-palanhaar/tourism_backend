@@ -20,30 +20,11 @@ DEV APIs
 
 '''
 
-
-failed_response_map = {'error':None}
-response_map = {'data':None}
-
-is_error = 'Something went wrong. Issue reported to Team and your account will be de-activated.'
-
-train_not_found = 'Train not available!'
-shops_list_not_found_1 = 'Stalls are not present on this station!'
-shops_list_not_found_2 = 'Pending verification for stalls!'
-shops_list_not_found_3 = 'Stalls are not registered on iDukaan!'
-shops_inv_list_not_found_1 = 'Products are not listed/available on this stall!'
-
-
-
-def error_response(error):
-    failed_response_map['error'] = error
-    return Response(failed_response_map, status=status.HTTP_400_BAD_REQUEST)
-
 def response_200(response_data):
     return Response(response_data, status=status.HTTP_200_OK)
 
 def response_400(response_data):
     return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 class TrainListApi(generics.ListAPIView):
@@ -82,38 +63,41 @@ class ShopListApi(generics.ListAPIView):
     def get(self, request, *args, **kwargs):
         response_data = {}
         response_data['station'] = kwargs['station']
-        shops = IRModel.Shop.objects.filter(station=kwargs['station'], is_active=True, is_open=True)
-        if shops.count() == 0:
-            error_map = IrError.shop_not_found
-            error_map['message'] = error_map['message'].format(kwargs['station'])
-            response_data['error'] = IrError.shop_not_found
-            return response_400(response_data)
-        serializer = self.get_serializer(shops, many=True)
-        response_data['shops'] = serializer.data
-        return response_200(response_data)
+        shops = IRModel.Shop.objects.filter(station=kwargs['station'])
+        if shops.filter(is_active=True, is_verified=True).count() != 0:
+            serializer = self.get_serializer(shops.filter(is_active=True, is_verified=True), many=True)
+            response_data['shops'] = serializer.data
+            return response_200(response_data)
+        elif shops.filter(is_active=False).count() != 0 or shops.filter(is_verified=False).count() != 0:
+            return response_400(IrError.irShopListInActiveNotVerified(shops[0].station.name, shops[0].station.code))
+        else:
+            station = IRModel.RailStation.objects.get(code = kwargs['station'])
+            return response_400(IrError.irShopListEmpty(station.name, station.code))
+        
     
 
 class ShopInvListApi(generics.ListAPIView):
     serializer_class = IRSerializer.ShopInvList
 
     def get(self, request, *args, **kwargs):
-        shop = IRModel.Shop.objects.filter(station=kwargs['station'], id=kwargs['shopId'], is_active=True, is_open=True)
-        if shop.count() == 0:
-            error_map = IrError.shop_not_found
-            error_map = error_map['message'].format(kwargs['station'])
+        try:
+            shop = IRModel.Shop.objects.get(station=kwargs['station'],id=kwargs['shopId'], is_active=True, is_verified=True)
+        except IRModel.Shop.DoesNotExist:
+            station = IRModel.RailStation.objects.get(code = kwargs['station'])
             response_data = {
                 "shop" : kwargs['shopId'],
                 "station" : kwargs['station'],
-                "error" : error_map
+                "error" : IrError.irShopListEmpty(station.name, station.code)
             }
             return response_400(response_data)
         
-        shop_invs = IRModel.ShopInv.objects.filter(shop=kwargs['shopId'], is_stock=True)
+        shop_invs = IRModel.ShopInv.objects.filter(shop=shop, is_stock=True)
+
         if shop_invs.count() == 0:
             response_data = {
                 "shop" : kwargs['shopId'],
                 "station" : kwargs['station'],
-                "error" : IrError.shops_inv_list_not_found
+                "error" : IrError.irShopInvListEmpty()
             }
             return response_400(response_data)
         
@@ -133,12 +117,12 @@ class ShopInfoApi(generics.RetrieveAPIView):
         try:
           shop = IRModel.Shop.objects.get(station=kwargs['station'], id=kwargs['shopId'], is_active=True, is_open=True)
         except IRModel.Shop.DoesNotExist:
-            error_map = IrError.shop_not_found
+            station = IRModel.RailStation.objects.get(code = kwargs['station'])
             error_map = error_map['message'].format(kwargs['station'])
             response_data = {
-                'error' : error_map
+                'error' : IrError.irShopListEmpty(station.name, station.code)
             }
-            return response_400(response_data)
+            return response_400(response_data)        
         
         serializer = self.get_serializer(shop)
         return response_200(serializer.data)

@@ -84,8 +84,3 @@ def businessOrgOpsNotFound(orgName):
             'message' : f'{orgName} do not have inter-state operations. Please add GSTIN for connecting with shops.'
         }
     }
-
-org_emp_self_not_found = {
-    'code' : 'businessOrgEmpSelfNotFound_iDukaan',
-    'message' : 'You are no longer associated with the organization.'
-}
