@@ -131,6 +131,7 @@ class AddShop_iDukaan(serializers.ModelSerializer):
             platform_b = validated_data['platform_b'],
             is_open = False,
             is_active = False,
+            is_verified = False,
             #payments
             is_cash = validated_data['is_cash'],
             is_card = validated_data['is_card'],
@@ -171,14 +172,14 @@ class ShopList_iDukaan(serializers.ModelSerializer):
     id = serializers.CharField()
     class Meta:
         model = models.Shop
-        fields = ['id','name','image','station','platform_a','platform_b','is_open','is_active']
+        fields = ['id','name','image','station','platform_a','platform_b','is_open','is_active','is_verified']
 
 
 class OrgShopList_iDukaan(serializers.ModelSerializer):
     id = serializers.CharField()
     class Meta:
         model = models.Shop
-        fields = ['id','name','image','station','platform_a','platform_b','is_open', 'is_active']
+        fields = ['id','name','image','station','platform_a','platform_b','is_open', 'is_active','is_verified']
 
 
 class UpdateShop_iDukaan(serializers.ModelSerializer):

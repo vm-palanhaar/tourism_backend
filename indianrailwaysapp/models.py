@@ -74,7 +74,8 @@ class Shop(TimestampModel):
     platform_a = models.CharField(max_length=6, blank=True, null=True, verbose_name='Primary Platform')
     platform_b = models.CharField(max_length=6, blank=True, null=True, verbose_name='Secondary Platform')
     is_open = models.BooleanField(default=False, verbose_name='Open')
-    is_active = models.BooleanField(default=False, verbose_name='Verified')
+    is_active = models.BooleanField(default=False, verbose_name='Active')
+    is_verified = models.BooleanField(default=False, verbose_name='Verified')
     #Payment Methods
     is_cash = models.BooleanField(default=False, verbose_name='Cash')
     is_card = models.BooleanField(default=False, verbose_name='Card')

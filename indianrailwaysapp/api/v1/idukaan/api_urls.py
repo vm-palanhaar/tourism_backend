@@ -2,7 +2,7 @@ from django.urls import path, include
 
 from indianrailwaysapp.api.v1.idukaan import api_views as API
 
-org_shop_gst = API.ShopGstPostGetAPIViewset.as_view({
+org_shop_gst = API.ShopGstApi.as_view({
     'post': 'create',
     'get': 'list'
 })
