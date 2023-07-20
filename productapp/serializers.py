@@ -67,7 +67,7 @@ class AddProductSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         try:
-            images = self.context.get('view').request.FILES.getlist('images')
+            images = self.context.get('images')
         except KeyError:
             return super().create(validated_data)
 
