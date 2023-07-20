@@ -61,6 +61,9 @@ def response_200(response_data):
 def response_400(response_data):
     return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
+def response_401(response_data):
+    return Response(response_data, status=status.HTTP_401_UNAUTHORIZED)
+
 def response_409(response_data):
     return Response(response_data, status=status.HTTP_409_CONFLICT)
 
@@ -82,7 +85,8 @@ class OrgShopApi(viewsets.ViewSet, PermissionRequiredMixin):
                 if org_emp.is_manager == True:
                     try:
                         ShopModel.ShopLic.objects.get(reg_no = request.data['lic_number'])
-                        return response_409(IrError.irShopLicFound())
+                        response_data.update(IrError.irShopLicFound())
+                        return response_409(response_data)
                     except ShopModel.ShopLic.DoesNotExist:
                         serializer = ShopSerializer.AddShop_iDukaan(data=request.data, context={'user': request.user})
                         if serializer.is_valid():
@@ -92,11 +96,15 @@ class OrgShopApi(viewsets.ViewSet, PermissionRequiredMixin):
                             return Response(response_data, status=status.HTTP_201_CREATED)
                     return response_400(serializer.errors)
                 elif org_emp.is_manager == False:
-                    return response_400(OrgError.businessOrgEmpNotMng(org_emp.org.name))
+                    response_data.update(OrgError.businessOrgEmpNotMng(org_emp.org.name))
+                    return response_400(response_data)
             elif org_emp != None and org_emp.org.is_active == False:
-                return response_400(OrgError.businessOrgNotVerified(org_emp.org.name))
-            return response_400(OrgError.businessOrgEmpSelfNotFound(kwargs['orgId']))
-        return errors.badActionUser(request, 'IrOrgShopApiCreate_OrgId_Url-{0}_HB-{1}'.format(kwargs['orgId'],request.data['org']))
+                response_data.update(OrgError.businessOrgNotVerified(org_emp.org.name))
+                return response_400(response_data)
+            response_data.update(OrgError.businessOrgEmpSelfNotFound())
+            return response_400(response_data)
+        response_data.update(errors.badActionUser(request, 'IrOrgShopApiCreate_OrgId_Url-{0}_HB-{1}'.format(kwargs['orgId'],request.data['org'])))
+        return response_401(response_data)
         
     def list(self, request, *args, **kwargs):
         response_data = {}
@@ -112,7 +120,8 @@ class OrgShopApi(viewsets.ViewSet, PermissionRequiredMixin):
                     shop_list.append(response)
                 response_data['irOrgShops'] = shop_list
                 return response_200(response_data)
-            return response_400(IrError.irOrgShopListEmptyMng())
+            response_data.update(IrError.irOrgShopListEmptyMng())
+            return response_400(response_data)
         elif org_emp != None and org_emp.is_manager == False:
             shop_list = []
             shops = ShopModel.OrgShopEmp.objects.filter(user=request.user, org=kwargs['orgId'])
@@ -123,8 +132,10 @@ class OrgShopApi(viewsets.ViewSet, PermissionRequiredMixin):
                     shop_list.append(response)
                 response_data['irOrgShops'] = shop_list
                 return response_200(response_data)
-            return response_400(IrError.irOrgShopListEmptyNotMng())
-        return response_400(OrgError.businessOrgEmpSelfNotFound(kwargs['orgId']))
+            response_data.update(IrError.irOrgShopListEmptyNotMng())
+            return response_400(response_data)
+        response_data.update(OrgError.businessOrgEmpSelfNotFound())
+        return response_400(response_data)
 
     def partial_update(self, request, *args, **kwargs):
         response_data = {}
@@ -139,13 +150,18 @@ class OrgShopApi(viewsets.ViewSet, PermissionRequiredMixin):
                         return response_200(response_data)
                     return response_400(serializer.errors)
                 elif orgShopEmp['shop'] != None and orgShopEmp['isMng'] == False:
-                    return response_400(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                    response_data.update(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                    return response_400(response_data)
                 elif orgShopEmp['shop'] == None and orgShopEmp['isMng'] == True:
-                    return response_400(IrError.irOrgShopNotFound())
+                    response_data.update(IrError.irOrgShopNotFound())
+                    return response_400(response_data)
                 elif orgShopEmp['shop'] == None and orgShopEmp['isMng'] == False:
-                    return response_400(IrError.irOrgShopEmpSelfNotFound())
-            return response_400(IrError.irOrgShopEmpSelfNotFound())
-        return errors.badActionUser(request, 'IrOrgShopApiPatch_ShopId_Url-{0}_HB-{1}'.format(kwargs['shopId'],request.data['id']))
+                    response_data.update(IrError.irOrgShopEmpSelfNotFound())
+                    return response_400(response_data)
+            response_data.update(IrError.irOrgShopEmpSelfNotFound())
+            return response_400(response_data)
+        response_data.update(errors.badActionUser(request, 'IrOrgShopApiPatch_ShopId_Url-{0}_HB-{1}'.format(kwargs['shopId'],request.data['id'])))
+        return response_401(response_data)
             
     def retrieve(self, request, *args, **kwargs):
         response_data = {}
@@ -155,7 +171,8 @@ class OrgShopApi(viewsets.ViewSet, PermissionRequiredMixin):
             serializer = ShopSerializer.ShopInfo_iDukaan(orgShopEmp['shop'])
             response_data['shop'] = serializer.data
             return response_200(response_data)
-        return response_400(IrError.irOrgShopEmpSelfNotFound())
+        response_data.update(IrError.irOrgShopEmpSelfNotFound())
+        return response_400(response_data)
 
 
 class ShopListApi(generics.ListAPIView, PermissionRequiredMixin):
@@ -163,10 +180,10 @@ class ShopListApi(generics.ListAPIView, PermissionRequiredMixin):
     permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
     def get(self, request, *args, **kwargs):
-        response_data = {}
-        shop_list = []
         shops = ShopModel.OrgShopEmp.objects.filter(user=request.user)
         if shops.count() != 0:
+            response_data = {}
+            shop_list = []
             for shop in shops:
                 serializer = self.get_serializer(shop.shop).data
                 serializer['org'] = f'{shop.org.id}'
@@ -192,11 +209,13 @@ class OrgShopEmpAPi(viewsets.ViewSet, PermissionRequiredMixin):
                             orgEmp = OrgModel.OrgEmp.objects.get(id = request.data['empId'])
                             try:
                                 shopEmp = ShopModel.OrgShopEmp.objects.get(user = orgEmp.user, org = orgEmp.org, shop = request.data['shop'])
-                                return response_409(IrError.irOrgShopAddEmpFound(shopEmp))
+                                response_data.update(IrError.irOrgShopAddEmpFound(shopEmp))
+                                return response_409(response_data)
                             except ShopModel.OrgShopEmp.DoesNotExist:
                                 pass
                         except OrgModel.OrgEmp.DoesNotExist:
-                            return response_400(OrgError.businessOrgEmpNotFound(orgShopEmp.org.name))
+                            response_data.update(OrgError.businessOrgEmpNotFound(orgShopEmp.org.name))
+                            return response_400(response_data)
                         serializer = ShopSerializer.AddOrgShopEmp_iDukaan(data=request.data)
                         if serializer.is_valid():
                             serializer.save()
@@ -205,20 +224,28 @@ class OrgShopEmpAPi(viewsets.ViewSet, PermissionRequiredMixin):
                             return Response(response_data, status=status.HTTP_201_CREATED)
                         return response_400(serializer.errors)
                     elif orgShopEmp['isMng'] == False:
-                        return response_400(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                        response_data.update(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                        return response_400(response_data)
                 elif orgShopEmp['shop'] != None and orgShopEmp['shop'].is_active == True and orgShopEmp['shop'].is_verified == False:
-                    return response_400(IrError.irOrgShopNotVerified(orgShopEmp['shop'].name))
+                    response_data.update(IrError.irOrgShopNotVerified(orgShopEmp['shop'].name))
+                    return response_400(response_data)
                 elif orgShopEmp['shop'] != None and orgShopEmp['shop'].is_active == False and orgShopEmp['shop'].is_verified == True:
-                    return response_400(IrError.irOrgShopInActive(orgShopEmp['shop'].name))
+                    response_data.update(IrError.irOrgShopInActive(orgShopEmp['shop'].name))
+                    return response_400(response_data)
                 elif orgShopEmp['shop'] != None and orgShopEmp['shop'].is_active == False and orgShopEmp['shop'].is_verified == False:
-                    return response_400(IrError.irOrgShopInActiveNotVerified(orgShopEmp['shop'].name))
+                    response_data.update(IrError.irOrgShopInActiveNotVerified(orgShopEmp['shop'].name))
+                    return response_400(response_data)
                 elif orgShopEmp['shop'] == None and orgShopEmp['isMng'] == True:
-                    return response_400(IrError.irOrgShopNotFound())
+                    response_data.update(IrError.irOrgShopNotFound())
+                    return response_400(response_data)
                 elif orgShopEmp['shop'] == None and orgShopEmp['isMng'] == False:
-                    return response_400(IrError.irOrgShopEmpSelfNotFound())
-            return response_400(IrError.irOrgShopEmpSelfNotFound())
-        return errors.badActionUser(request, 'IrOrgShopEmpApiCreate_ShopId_Url-{0}_HB-{1}'.format(kwargs['shopId'],request.data['shop']))
-
+                    response_data.update(IrError.irOrgShopEmpSelfNotFound())
+                    return response_400(response_data)
+            response_data.update(IrError.irOrgShopEmpSelfNotFound())
+            return response_400(response_data)
+        response_data.update(errors.badActionUser(request, 'IrOrgShopEmpApiCreate_ShopId_Url-{0}_HB-{1}'.format(kwargs['shopId'],request.data['shop'])))
+        return response_401(response_data)
+    
     def list(self, request, *args, **kwargs):
         response_data = {}
         response_data['shopId'] = kwargs['shopId']
@@ -229,10 +256,12 @@ class OrgShopEmpAPi(viewsets.ViewSet, PermissionRequiredMixin):
             response_data['orgShopEmpList'] = serializer.data
             return response_200(response_data)
         elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == True:
-            return response_400(IrError.irOrgShopNotFound())
+            response_data.update(IrError.irOrgShopNotFound())
+            return response_400(response_data)
         elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == False:
             pass
-        return response_400(IrError.irOrgShopEmpSelfNotFound())
+        response_data.update(IrError.irOrgShopEmpSelfNotFound())
+        return response_400(response_data)
             
     def partial_update(self, request, *args, **kwargs):
         response_data = {}
@@ -245,21 +274,27 @@ class OrgShopEmpAPi(viewsets.ViewSet, PermissionRequiredMixin):
                     try:
                         shopEmp = ShopModel.OrgShopEmp.objects.get(id=request.data['id'])
                     except ShopModel.OrgShopEmp.DoesNotExist:
-                        return response_400(IrError.irOrgShopEmpNotFound(request.data['name'], orgShopEmp['shop'].name))
+                        response_data.update(IrError.irOrgShopEmpNotFound(request.data['name'], orgShopEmp['shop'].name))
+                        return response_400(response_data)
                     if request.user == shopEmp.user:
-                        return response_400(IrError.irOrgShopEmpSelfUd(orgShopEmp['shop'].name))
+                        response_data.update(IrError.irOrgShopEmpSelfUd(orgShopEmp['shop'].name))
+                        return response_400(response_data)
                     serializer = ShopSerializer.UpdateOrgShopEmp_iDukaan(shopEmp, data=request.data, partial=True)
                     if serializer.is_valid():
                         serializer.save()
                         return response_200(response_data)
                     return response_400(serializer.errors)
                 elif orgShopEmp['isMng'] == False:
-                        return response_400(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                        response_data.update(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                        return response_400(response_data)
             elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == True:
-                return response_400(IrError.irOrgShopNotFound())
+                response_data.update(IrError.irOrgShopNotFound())
+                return response_400(response_data)
             elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == False:
-                return response_400(IrError.irOrgShopEmpSelfNotFound())
-        return errors.badActionUser(request, 'IrOrgShopEmpApiPartial_EmpId_Url-{0}_HB-{1}'.format(kwargs['empId'],request.data['id']))
+                response_data.update(IrError.irOrgShopEmpSelfNotFound())
+                return response_400(response_data)
+        response_data.update(errors.badActionUser(request, 'IrOrgShopEmpApiPartial_EmpId_Url-{0}_HB-{1}'.format(kwargs['empId'],request.data['id'])))
+        return response_401(response_data)
 
     def destroy(self, request, *args, **kwargs):
         response_data = {}
@@ -272,19 +307,24 @@ class OrgShopEmpAPi(viewsets.ViewSet, PermissionRequiredMixin):
                     try:
                         shopEmp = ShopModel.OrgShopEmp.objects.get(id=request.data['id'])
                     except ShopModel.OrgShopEmp.DoesNotExist:
-                        return response_400(IrError.irOrgShopEmpNotFound(request.data['name'], orgShopEmp['shop'].name))
+                        response_data.update(IrError.irOrgShopEmpNotFound(request.data['name'], orgShopEmp['shop'].name))
+                        return response_400(response_data)
                     if request.user == shopEmp.user:
-                        return response_400(IrError.irOrgShopEmpSelfUd(orgShopEmp['shop'].name))
+                        response_data.update(IrError.irOrgShopEmpSelfUd(orgShopEmp['shop'].name))
+                        return response_400(response_data)
                     shopEmp.delete()
                     return response_200(response_data)
                 elif orgShopEmp['isMng'] == False:
-                        return response_400(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                    response_data.update(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                    return response_400(response_data)
             elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == True:
-                return response_400(IrError.irOrgShopNotFound())
+                response_data.update(IrError.irOrgShopNotFound())
+                return response_400(response_data)
             elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == False:
-                return response_400(IrError.irOrgShopEmpSelfNotFound())
-        return errors.badActionUser(request, 'IrOrgShopEmpApiDelete_EmpId_Url-{0}_HB-{1}'.format(kwargs['empId'],request.data['id']))
-  
+                response_data.update(IrError.irOrgShopEmpSelfNotFound())
+                return response_400(response_data)
+        response_data.update(errors.badActionUser(request, 'IrOrgShopEmpApiDelete_EmpId_Url-{0}_HB-{1}'.format(kwargs['empId'],request.data['id'])))
+        return response_401(response_data)
 
 class ShopLicApi(viewsets.ViewSet, PermissionRequiredMixin):
     permission_classes = [IsAuthenticated,UserPerm.IsVerified]
@@ -303,16 +343,20 @@ class ShopLicApi(viewsets.ViewSet, PermissionRequiredMixin):
                         response_data['message'] = 'Hello'
                         return Response(response_data, status=status.HTTP_201_CREATED)
                     if 'reg_no' in serializer.errors:
-                        response_data['error'] = IrError.irShopLicFound()
+                        response_data.update(IrError.irShopLicFound())
                         return response_409(response_data)
                     return response_400(serializer.errors)
                 elif orgShopEmp['isMng'] == False:
-                    return response_400(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                    response_data.update(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                    return response_400(response_data)
             elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == True:
-                return response_400(IrError.irOrgShopNotFound())
+                response_data.update(IrError.irOrgShopNotFound())
+                return response_400(response_data)
             elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == False:
-                return response_400(IrError.irOrgShopEmpSelfNotFound())
-        return errors.badActionUser(request, 'IrShopLicApiCreate_ShopId_Url-{0}_HB-{1}'.format(kwargs['shopId'],request.data['shop']))
+                response_data.update(IrError.irOrgShopEmpSelfNotFound())
+                return response_400(response_data)
+        response_data.update(errors.badActionUser(request, 'IrShopLicApiCreate_ShopId_Url-{0}_HB-{1}'.format(kwargs['shopId'],request.data['shop'])))
+        return response_401(response_data)
     
     def list(self, request, *args, **kwargs):
         response_data = {}
@@ -325,14 +369,17 @@ class ShopLicApi(viewsets.ViewSet, PermissionRequiredMixin):
                     serializer = ShopSerializer.ShopLicList_iDukaan(lics, many=True)
                     response_data['licList'] = serializer.data
                     return response_200(response_data)
-                response_data['error'] = IrError.irShopLicNotFound()
+                response_data.update(IrError.irShopLicNotFound())
                 return response_400(response_data)
             elif orgShopEmp['isMng'] == False:
-                return response_400(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                response_data.update(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                return response_400(response_data)
         elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == True:
-            return response_400(IrError.irOrgShopNotFound())
+            response_data.update(IrError.irOrgShopNotFound())
+            return response_400(response_data)
         elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == False:
-            return response_400(IrError.irOrgShopEmpSelfNotFound())
+            response_data.update(IrError.irOrgShopEmpSelfNotFound())
+            return response_400(response_data)
 
 
 class ShopFssaiLicApi(viewsets.ViewSet, PermissionRequiredMixin):
@@ -352,16 +399,20 @@ class ShopFssaiLicApi(viewsets.ViewSet, PermissionRequiredMixin):
                         response_data['message'] = 'Hello'
                         return Response(response_data, status=status.HTTP_201_CREATED)
                     if 'reg_no' in serializer.errors:
-                        response_data['error'] = IrError.irShopFssaiLicFound()
+                        response_data.update(IrError.irShopFssaiLicFound())
                         return response_409(response_data)
                     return response_400(serializer.errors)
                 elif orgShopEmp['isMng'] == False:
-                    return response_400(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                    response_data.update(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                    return response_400(response_data)
             elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == True:
-                return response_400(IrError.irOrgShopNotFound())
+                response_data.update(IrError.irOrgShopNotFound())
+                return response_400(response_data)
             elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == False:
-                return response_400(IrError.irOrgShopEmpSelfNotFound())
-        return errors.badActionUser(request, 'IrShopFssaiLicApiCreate_ShopId_Url-{0}_HB-{1}'.format(kwargs['shopId'],request.data['shop']))
+                response_data.update(IrError.irOrgShopEmpSelfNotFound())
+                return response_400(response_data)
+        response_data.update(errors.badActionUser(request, 'IrShopFssaiLicApiCreate_ShopId_Url-{0}_HB-{1}'.format(kwargs['shopId'],request.data['shop'])))
+        return response_401(response_data)
     
     def list(self, request, *args, **kwargs):
         response_data = {}
@@ -374,14 +425,17 @@ class ShopFssaiLicApi(viewsets.ViewSet, PermissionRequiredMixin):
                     serializer = ShopSerializer.ShopFssaiLicList_iDukaan(lics, many=True)
                     response_data['fssaiLicList'] = serializer.data
                     return response_200(response_data)
-                response_data['error'] = IrError.irShopFssaiLicNotFound()
+                response_data.update(IrError.irShopFssaiLicNotFound())
                 return response_400(response_data)
             elif orgShopEmp['isMng'] == False:
-                return response_400(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                response_data.update(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                return response_400(response_data)
         elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == True:
-            return response_400(IrError.irOrgShopNotFound())
+            response_data.update(IrError.irOrgShopNotFound())
+            return response_400(response_data)
         elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == False:
-            return response_400(IrError.irOrgShopEmpSelfNotFound())
+            response_data.update(IrError.irOrgShopEmpSelfNotFound())
+            return response_400(response_data)
 
 
 class ShopInvApi(viewsets.ViewSet, PermissionRequiredMixin):
@@ -397,13 +451,16 @@ class ShopInvApi(viewsets.ViewSet, PermissionRequiredMixin):
                     try:
                         inv = ShopModel.ShopInv.objects.get(shop=request.data['shop'], product=request.data['product'])
                         if inv.is_stock:
-                            return response_409(IrError.irShopInvProdIsFound())
-                        return response_409(IrError.irShopInvProdOsFound())
+                            response_data.update(IrError.irShopInvProdIsFound())
+                            return response_409(response_data)
+                        response_data.update(IrError.irShopInvProdOsFound())
+                        return response_409(response_data)
                     except ShopModel.ShopInv.DoesNotExist:
                         try:
                             prod = PcModel.Product.objects.get(id=request.data['product'])
                         except PcModel.Product.DoesNotExist:
-                            return response_400(product_not_found)
+                            response_data.update(product_not_found)
+                            return response_400(response_data)
                         serializer = ShopSerializer.AddShopInv_iDukaan(data=request.data)
                         if serializer.is_valid():
                             serializer.save()
@@ -415,12 +472,16 @@ class ShopInvApi(viewsets.ViewSet, PermissionRequiredMixin):
                             return Response(response_data, status=status.HTTP_201_CREATED)
                         return response_400(serializer.errors)
                 elif orgShopEmp['isMng'] == False:
-                    return response_400(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                    response_data.update(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                    return response_400(response_data)
             elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == True:
-                return response_400(IrError.irOrgShopNotFound())
+                response_data.update(IrError.irOrgShopNotFound())
+                return response_400(response_data)
             elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == False:
-                return response_400(IrError.irOrgShopEmpSelfNotFound())   
-        return errors.badActionUser(request, 'IrShopInvApiCreate_ShopId_Url-{0}_HB-{1}'.format(kwargs['shopId'],request.data['shop']))
+                response_data.update(IrError.irOrgShopEmpSelfNotFound())
+                return response_400(response_data)
+        response_data.update(errors.badActionUser(request, 'IrShopInvApiCreate_ShopId_Url-{0}_HB-{1}'.format(kwargs['shopId'],request.data['shop']))) 
+        return response_401(response_data)
 
     def list(self, request, *args, **kwargs):
         response_data = {}
@@ -433,19 +494,24 @@ class ShopInvApi(viewsets.ViewSet, PermissionRequiredMixin):
                 elif request.GET.get('q',None) == 'os':
                     stock = False
                 else:
-                    return errors.badActionUser(request, 'IrShopInvApiList_ShopId_Url-{0}'.format(kwargs['shopId']))
+                    response_data.update(errors.badActionUser(request, 'IrShopInvApiList_ShopId_Url-{0}'.format(kwargs['shopId'])))
+                    return response_401(response_data)
                 prods = ShopModel.ShopInv.objects.filter(shop = kwargs['shopId'], is_stock=stock)
                 if prods.count() == 0:
                     if stock:
-                        return response_400(IrError.irShopInvIsNotFound())
-                    return response_400(IrError.irShopInvOsNotFound())
+                        response_data.update(IrError.irShopInvIsNotFound())
+                        return response_400(response_data)
+                    response_data.update(IrError.irShopInvOsNotFound())
+                    return response_400(response_data)
                 serializer = ShopSerializer.ShopInvList(prods, many=True)
                 response_data['invList'] = serializer.data
                 return response_200(response_data)
         elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == True:
-            return response_400(IrError.irOrgShopNotFound())
+            response_data.update(IrError.irOrgShopNotFound())
+            return response_400(response_data)
         elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == False:
-            return response_400(IrError.irOrgShopEmpSelfNotFound())
+            response_data.update(IrError.irOrgShopEmpSelfNotFound())
+            return response_400(response_data)
 
     def partial_update(self, request, *args, **kwargs):
         response_data = {}
@@ -458,19 +524,24 @@ class ShopInvApi(viewsets.ViewSet, PermissionRequiredMixin):
                     try:
                         inv = ShopModel.ShopInv.objects.get(id=request.data['id'])
                     except ShopModel.ShopInv.DoesNotExist:
-                        return response_400(IrError.irShopInvNotFound(orgShopEmp['shop'].name))
+                        response_data.update(IrError.irShopInvNotFound(orgShopEmp['shop'].name))
+                        return response_400(response_data)
                     serializer = ShopSerializer.PatchShopInv_iDukaan(inv, data=request.data, partial=True)
                     if serializer.is_valid():
                         serializer.save()
                         return response_200(response_data)
                     return response_400(serializer.errors)
                 elif orgShopEmp['isMng'] == False:
-                    return response_400(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                    response_data.update(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                    return response_400(response_data)
             elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == True:
-                return response_400(IrError.irOrgShopNotFound())
+                response_data.update(IrError.irOrgShopNotFound())
+                return response_400(response_data)
             elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == False:
-                return response_400(IrError.irOrgShopEmpSelfNotFound())   
-        return errors.badActionUser(request, 'IrShopInvApiPatch_InvId_Url-{0}_HB-{1}'.format(kwargs['invId'],request.data['id']))
+                response_data.update(IrError.irOrgShopEmpSelfNotFound())
+                return response_400(response_data)
+        response_data.update(errors.badActionUser(request, 'IrShopInvApiPatch_InvId_Url-{0}_HB-{1}'.format(kwargs['invId'],request.data['id'])))   
+        return response_401(response_data)
     
     def destroy(self, request, *args, **kwargs):
         response_data = {}
@@ -484,14 +555,19 @@ class ShopInvApi(viewsets.ViewSet, PermissionRequiredMixin):
                             ShopModel.ShopInv.objects.get(id=request.data['id']).delete()
                             return response_200(response_data)
                         except ShopModel.ShopInv.DoesNotExist:
-                            return response_400(IrError.irShopInvNotFound(orgShopEmp['shop'].name))
+                            response_data.update(IrError.irShopInvNotFound(orgShopEmp['shop'].name))
+                            return response_400(response_data)
                     elif orgShopEmp['isMng'] == False:
-                        return response_400(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                        response_data.update(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                        return response_400(response_data)
             elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == True:
-                return response_400(IrError.irOrgShopNotFound())
+                response_data.update(IrError.irOrgShopNotFound())
+                return response_400(response_data)
             elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == False:
-                return response_400(IrError.irOrgShopEmpSelfNotFound()) 
-        return errors.badActionUser(request, 'IrShopInvApiDelete_InvId_Url-{0}_HB-{1}'.format(kwargs['invId'],request.data['id']))
+                response_data.update(IrError.irOrgShopEmpSelfNotFound())
+                return response_400(response_data) 
+        response_data.update(errors.badActionUser(request, 'IrShopInvApiDelete_InvId_Url-{0}_HB-{1}'.format(kwargs['invId'],request.data['id'])))
+        return response_401(response_data)
 
 
 class ShopGstApi(viewsets.ViewSet, PermissionRequiredMixin):
@@ -506,12 +582,13 @@ class ShopGstApi(viewsets.ViewSet, PermissionRequiredMixin):
                 if orgShopEmp['isMng'] == True:
                     try:
                         shopGst = ShopModel.ShopGst.objects.get(gst = request.data['gst'], shop = request.data['shop'])
-                        return response_409(IrError.irShopGstFound(orgShopEmp['shop'].name, shopGst.gst.gstin))
+                        response_data.update(IrError.irShopGstFound(orgShopEmp['shop'].name, shopGst.gst.gstin))
+                        return response_409(response_data)
                     except ShopModel.ShopGst.DoesNotExist:
                         try:
                             OrgModel.OrgStateGstOps.objects.get(id=request.data['gst'])
                         except OrgModel.OrgStateGstOps.DoesNotExist:
-                            response_data['error'] = OrgError.businessOrgOpsNotFound()
+                            response_data.update(OrgError.businessOrgOpsNotFound())
                             return response_409(response_data)
                         serializer = ShopSerializer.AddShopGst_iDukaan(data=request.data)
                         if serializer.is_valid():
@@ -520,12 +597,16 @@ class ShopGstApi(viewsets.ViewSet, PermissionRequiredMixin):
                             response_data['message'] = 'Success, GSTIN connected to shop!'
                             return Response(response_data, status=status.HTTP_201_CREATED)
                 elif orgShopEmp['isMng'] == False:
-                    return response_400(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                    response_data.update(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                    return response_400(response_data)
             elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == True:
-                return response_400(IrError.irOrgShopNotFound())
+                response_data.update(IrError.irOrgShopNotFound())
+                return response_400(response_data)
             elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == False:
-                return response_400(IrError.irOrgShopEmpSelfNotFound())   
-        return errors.badActionUser(request, 'IrShopGstApiCreate_ShopId_Url-{0}_HB-{1}'.format(kwargs['shopId'],request.data['shop']))
+                response_data.update(IrError.irOrgShopEmpSelfNotFound())
+                return response_400(response_data)
+        response_data.update(errors.badActionUser(request, 'IrShopGstApiCreate_ShopId_Url-{0}_HB-{1}'.format(kwargs['shopId'],request.data['shop'])))  
+        return response_401(response_data)
 
     def list(self, request, *args, **kwargs):
         response_data = {}
@@ -538,11 +619,14 @@ class ShopGstApi(viewsets.ViewSet, PermissionRequiredMixin):
                     serializer = ShopSerializer.ShopGstList_iDukaan(gst, many=True)
                     response_data['gstList'] = serializer.data
                     return response_200(response_data)
-                response_data['error'] = IrError.irShopGstNotFound(orgShopEmp['shop'].name)
+                response_data.update(IrError.irShopGstNotFound(orgShopEmp['shop'].name))
                 return response_400(response_data)
             elif orgShopEmp['isMng'] == False:
-                return response_400(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                response_data.update(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                return response_400(response_data)
         elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == True:
-            return response_400(IrError.irOrgShopNotFound())
+            response_data.update(IrError.irOrgShopNotFound())
+            return response_400(response_data)
         elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == False:
-            return response_400(IrError.irOrgShopEmpSelfNotFound())
+            response_data.update(IrError.irOrgShopEmpSelfNotFound())
+            return response_400(response_data)
