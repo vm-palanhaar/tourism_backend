@@ -488,7 +488,7 @@ class ShopInvApi(viewsets.ViewSet, PermissionRequiredMixin):
         response_data['shopId'] = kwargs['shopId']
         orgShopEmp = validateOrgShopEmpMap_Shop_IsMng(request.user, kwargs['shopId'], kwargs['orgId'])
         if orgShopEmp != None and orgShopEmp['shop'] != None:
-            if orgShopEmp['isMng'] == True and orgShopEmp['isMng'] == False:
+            if orgShopEmp['isMng'] == True or orgShopEmp['isMng'] == False:
                 if request.GET.get('q',None) == 'is':
                     stock = True
                 elif request.GET.get('q',None) == 'os':

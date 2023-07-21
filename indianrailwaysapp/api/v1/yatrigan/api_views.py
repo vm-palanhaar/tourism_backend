@@ -72,7 +72,8 @@ class ShopListApi(generics.ListAPIView):
             return response_400(IrError.irShopListInActiveNotVerified(shops[0].station.name, shops[0].station.code))
         else:
             station = IRModel.RailStation.objects.get(code = kwargs['station'])
-            return response_400(IrError.irShopListEmpty(station.name, station.code))
+            response_data.update(IrError.irShopListEmpty(station.name, station.code))
+            return response_400(response_data)
         
     
 
