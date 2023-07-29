@@ -54,7 +54,6 @@ class BrandApi(viewsets.ViewSet, PermissionRequiredMixin):
         serializer = PCSerializer.AddBrandSerializer(data = request.data)
         if serializer.is_valid():
             serializer.save()
-            response_data['brand'] = serializer.data
             response_data['message'] = 'We appreciate for your efforts for making our community a better place to visit and shop at your store. '\
             'We thrive building a community to promote local products and the manufacturers to recognize themselves through Made In India initiative.'
             return Response(response_data, status=status.HTTP_201_CREATED)
@@ -119,8 +118,8 @@ class BrandProdApi(viewsets.ViewSet, PermissionRequiredMixin):
             serializer = PCSerializer.AddProductSerializer(data = request.data, context={'images': request.FILES.getlist('images')})
             if serializer.is_valid():
                 serializer.save()
-                response_data['product'] = serializer.data
-                response_data['message'] = ''
+                response_data['message'] = 'We appreciate for your efforts for making our community a better place to visit and shop at your store. '\
+                'We thrive building a community to promote local products and the manufacturers to recognize themselves through Made In India initiative.'
                 return Response(response_data, status=status.HTTP_201_CREATED)
             return response_400(serializer.errors)
         response_data.update(UtilError.badActionUser(request,'BrandProdApiCreate_brandId_Url-{0}_HB-{1}'.format(kwargs['brandId'], request.data['brand'])))
