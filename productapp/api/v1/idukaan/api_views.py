@@ -172,7 +172,7 @@ class BrandProdApi(viewsets.ViewSet, PermissionRequiredMixin):
             'pages' : math.ceil(products.count()/15),
             'message' : f'Showing list of {brand.name} products from {from_range} to {to_range} out of {products.count()}',
             'alert' : None if to_range!=products.count() else 'No more products to show',
-            'results' : serializer.data[(page_num-1)*15: (page_num)*15],
+            'prodList' : serializer.data[(page_num-1)*15: (page_num)*15],
         })
         return response_200(response_data)
     

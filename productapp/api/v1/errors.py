@@ -90,3 +90,11 @@ def pcBrandProdSubGroupListEmpty(brandName):
             'message' : f'{brandName}\'s products with this category not found in the community.\n\n'\
         }
     }
+
+def pcProdNotFound(): 
+    return {
+        'error' : {
+            'code' : 'pcProdNotFound_iDukaan',
+            'message' : f'Product is no longer available!'\
+        }
+    }

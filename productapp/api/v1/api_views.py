@@ -4,6 +4,7 @@ from rest_framework import status
 
 from productapp import models as PCModel
 from productapp import serializers as PCSerializer
+from productapp.api.v1 import errors as PcError
 
 '''
 PROD
@@ -11,20 +12,25 @@ PROD
 DEV
 '''
 
-failed_response_map = {'error':None}
-response_map = {'data':None}
+def response_200(response_fail):
+    return Response(response_fail, status=status.HTTP_200_OK)
+
+def response_400(response_fail):
+    return Response(response_fail, status=status.HTTP_400_BAD_REQUEST)
 
 product_not_found = 'Product not found!'
 
 class ProductAPIView(generics.RetrieveAPIView):
 
     def get(self, request, *args, **kwargs):
+        response_data = {}
+        response_data['id'] = kwargs['productId']
         try:
-            product = PCModel.Product.objects.get(id=kwargs['productid'])
+            product = PCModel.Product.objects.get(id=kwargs['productId'])
         except PCModel.Product.DoesNotExist:
-            failed_response_map['error'] = product_not_found
-            return Response(failed_response_map, status=status.HTTP_404_NOT_FOUND)
+            response_data.update(PcError.pcProdNotFound())
+            return response_400(response_data)
         
         serializer = PCSerializer.ProductSerializer(product)
-        response_map['data'] = serializer.data
-        return Response(response_map, status=status.HTTP_200_OK)
+        response_data = serializer.data
+        return response_200(response_data)
