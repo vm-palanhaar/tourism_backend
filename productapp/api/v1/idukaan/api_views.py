@@ -49,6 +49,10 @@ class BrandApi(viewsets.ViewSet, PermissionRequiredMixin):
             brands = PCModel.Brand.objects.filter(name__icontains=request.data['name'], is_show=True)
             if brands.count() != 0 :
                 serializer = PCSerializer.BrandListSerializer(brands, many=True)
+                reqName = request.data['name']
+                response_data['message'] = f'Brands matching with {reqName} found. Click on \n\n'\
+                            '1. Proceed to add brand.'\
+                            '2. Cancel if brand already exists from list.'
                 response_data['brandList'] = serializer.data
                 return Response(response_data, status=status.HTTP_200_OK)
         serializer = PCSerializer.AddBrandSerializer(data = request.data)
@@ -113,6 +117,10 @@ class BrandProdApi(viewsets.ViewSet, PermissionRequiredMixin):
                 products = PCModel.Product.objects.filter(brand=request.data['brand'], name__icontains=request.data['name'])
                 if products.count() != 0:
                     serializer = PCSerializer.ProductListSerializer(products, many=True)
+                    reqName = request.data['name']
+                    response_data['message'] = f'Products matching with {reqName} found. Click on \n\n'\
+                            '1. Proceed to add product.'\
+                            '2. Cancel if product already exists from list.'
                     response_data['prodList'] = serializer.data
                     return response_200(response_data)
             serializer = PCSerializer.AddProductSerializer(data = request.data, context={'images': request.FILES.getlist('images')})
