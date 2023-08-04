@@ -72,7 +72,7 @@ class OrgApi(viewsets.ViewSet, PermissionRequiredMixin):
             return Response(response_data, status=status.HTTP_201_CREATED)
         if 'reg_no' in serializer.data:
             return error_response_409(OrgError.businessOrgFound())
-        return error_response_400(serializer.errors)
+        return error_response_400(UtilError.bodyEmptyFields())
             
     def list(self, request, *args, **kwargs):
         response_data = {}
@@ -136,7 +136,8 @@ class OrgEmpApi(viewsets.ViewSet, PermissionRequiredMixin):
                             response_data['orgEmp'] = serializer.data
                             response_data['message'] = f'{user.first_name} {user.last_name} is associated with {org_emp.org.name}'
                             return Response(response_data, status=status.HTTP_201_CREATED)
-                        return error_response_400(serializer.errors)
+                        response_data.update(UtilError.bodyEmptyFields())
+                        return error_response_400(response_data)
                 elif org_emp.is_manager == False:
                     response_data.update(OrgError.businessOrgEmpNotMng(org_emp.org.name))
                     return error_response_400(response_data)
@@ -181,7 +182,8 @@ class OrgEmpApi(viewsets.ViewSet, PermissionRequiredMixin):
                 if serializer.is_valid():
                     serializer.save()
                     return Response(response_data, status=status.HTTP_200_OK)
-                return error_response_400(serializer.errors)
+                response_data.update(UtilError.bodyEmptyFields())
+                return error_response_400(response_data)
             elif org_emp != None and org_emp.is_manager == False:
                 response_data.update(OrgError.businessOrgEmpNotMng(org_emp.org.name))
                 return error_response_400(response_data)
@@ -238,7 +240,8 @@ class OrgStateGstApi(viewsets.ViewSet, PermissionRequiredMixin):
                             serializer.save()
                             response_data['orgOps'] = serializer.data
                             return Response(response_data, status=status.HTTP_201_CREATED)
-                        return error_response_400(serializer.errors)
+                        response_data.update(UtilError.bodyEmptyFields())
+                        return error_response_400(response_data)
                 elif org_emp.is_manager == False:
                     response_data.update(OrgError.businessOrgEmpNotMng(org_emp.org.name))
                     return error_response_400(response_data)
