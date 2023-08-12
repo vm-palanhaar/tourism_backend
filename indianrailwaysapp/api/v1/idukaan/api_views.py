@@ -330,6 +330,7 @@ class OrgShopEmpAPi(viewsets.ViewSet, PermissionRequiredMixin):
         response_data.update(UtilError.badActionUser(request, 'IrOrgShopEmpApiDelete_EmpId_Url-{0}_HB-{1}'.format(kwargs['empId'],request.data['id'])))
         return response_401(response_data)
 
+
 class ShopLicApi(viewsets.ViewSet, PermissionRequiredMixin):
     permission_classes = [IsAuthenticated,UserPerm.IsVerified]
 
@@ -425,16 +426,16 @@ class ShopFssaiLicApi(viewsets.ViewSet, PermissionRequiredMixin):
         response_data['shopId'] = kwargs['shopId']
         orgShopEmp = validateOrgShopEmpMap_Shop_IsMng(request.user, kwargs['shopId'], kwargs['orgId'])
         if orgShopEmp != None and orgShopEmp['shop'] != None:
+            lics = ShopModel.ShopFssaiLic.objects.filter(shop=kwargs['shopId'])
+            if lics.count() != 0:
+                serializer = ShopSerializer.ShopFssaiLicList_iDukaan(lics, many=True)
+                response_data['fssaiLicList'] = serializer.data
+                return response_200(response_data)
             if orgShopEmp['isMng'] == True:
-                lics = ShopModel.ShopFssaiLic.objects.filter(shop=kwargs['shopId'])
-                if lics.count() != 0:
-                    serializer = ShopSerializer.ShopFssaiLicList_iDukaan(lics, many=True)
-                    response_data['fssaiLicList'] = serializer.data
-                    return response_200(response_data)
-                response_data.update(IrError.irShopFssaiLicNotFound())
+                response_data.update(IrError.irShopFssaiLicNotFoundEmpMng())
                 return response_400(response_data)
             elif orgShopEmp['isMng'] == False:
-                response_data.update(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                response_data.update(IrError.irShopFssaiLicNotFoundEmpNonMng(orgShopEmp['shop'].name))
                 return response_400(response_data)
         elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == True:
             response_data.update(IrError.irOrgShopNotFound())

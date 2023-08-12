@@ -8,7 +8,7 @@ def badActionUser(request, reason):
     return {
         'error' : {
             'code' : 'badActionUser',
-            'message' : 'Bad Action performed! Your account will be de-activated!'
+            'message' : 'You\'ve been blocked to access the platform due to security violations!'
         }
     }
 

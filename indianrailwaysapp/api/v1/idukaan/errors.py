@@ -108,7 +108,7 @@ def irOrgShopEmpSelfUd(shopName):
 def irShopLicNotFound():
     return {
         'error' : {
-            'code' : 'irShopLicNotFound_iDUkaan',
+            'code' : 'irShopLicNotFound_iDukaan',
             'message' : 'Shop/Stall license or notice is not available.'
         }
     }
@@ -116,16 +116,24 @@ def irShopLicNotFound():
 def irShopFssaiLicFound():
     return {
         'error' : {
-            'code' : 'irShopFssaiLicFound_iDUkaan',
+            'code' : 'irShopFssaiLicFound_iDukaan',
             'message' : 'The registration number you entered already exists in our iDukaan app. Please double-check the registration number and try again. If you need further information or assistance, we recommend raising a request for more information.'
         }
     }
 
-def irShopFssaiLicNotFound():
+def irShopFssaiLicNotFoundEmpMng():
     return {
         'error' : {
-            'code' : 'irShopFssaiLicNotFound_iDUkaan',
+            'code' : 'irShopFssaiLicNotFound_iDukaan',
             'message' : 'Shop/Stall FSSAI license is not available. Please add the license for verification process in case of catering business.'
+        }
+    }
+
+def irShopFssaiLicNotFoundEmpNonMng(shopName):
+    return {
+        'error' : {
+            'code' : 'irShopFssaiLicNotFound_iDukaan',
+            'message' : f'Shop/Stall FSSAI license is not available. You are not authorized to add/update/view specific resources in {shopName}.'
         }
     }
 

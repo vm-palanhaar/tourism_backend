@@ -15,6 +15,7 @@ class TimestampModel(models.Model):
 class OrgType(models.Model):
     entity = models.CharField(max_length=30, verbose_name='Entity')
     doc = models.CharField(max_length=30, verbose_name='Document')
+    desc = models.TextField(verbose_name='Description')
     def __str__(self):
         return self.entity
 

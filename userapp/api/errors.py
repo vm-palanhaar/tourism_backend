@@ -58,7 +58,7 @@ def userInActive():
     return {
         'error' : {
             'code' : 'userInActive',
-            'message' : 'This account is not yet active.'
+            'message' : 'You\'ve not verified registered email.'
         }
     }
 
@@ -66,7 +66,7 @@ def userNotVerified():
     return {
         'error' : {
             'code' : 'userNotVerified',
-            'message' : 'This account is not yet verified the identity.'
+            'message' : 'You\'ve not verified your identity. Please verify your identity using the options shown on screen.'
         }
     }
 

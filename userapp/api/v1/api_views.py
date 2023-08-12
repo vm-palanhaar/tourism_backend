@@ -5,10 +5,11 @@ from rest_framework import status, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import TokenAuthentication
 
 from knox.models import AuthToken
 
-from userapp import serializers, models
+from userapp import serializers, models, permissions
 from userapp.api import errors as UserError
 
 '''
@@ -25,6 +26,9 @@ def response_200(response_data):
 
 def response_400(response_data):
     return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
+def response_401(response_data):
+    return Response(response_data, status=status.HTTP_401_UNAUTHORIZED)
 
 def response_409(response_data):
     return Response(response_data, status=status.HTTP_409_CONFLICT)
@@ -79,11 +83,11 @@ class UserLoginApi(generics.GenericAPIView):
 
 
 class UserProfileApi(generics.RetrieveAPIView, PermissionRequiredMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,permissions.IsVerified]
 
     def get(self, request, *args, **kwargs):
         try:
-            user = models.User.objects.get(username = request.user, is_active=True)
+            user = models.User.objects.get(username = request.user)
         except models.User.DoesNotExist:
             return response_400(UserError.userInvalid())
         serializer = serializers.UserSerializer(user)
