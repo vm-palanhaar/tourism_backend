@@ -91,6 +91,7 @@ class ShopConfig(admin.ModelAdmin):
         ('SHOP', {'fields':('name','image','contact_number','business_type','shop_type')}),
         ('INDIAN RAILWAYS', {'fields':('lat','lon','station','platform_a','platform_b')}),
         ('PAYMENT', {'fields':('is_cash','is_card','is_upi')}),
+        ('OPTIONAL', {'fields':('is_osop','is_baby','is_medical')}),
         ('STATUS', {'fields':('is_open','is_active','is_verified')}),
     )
     raw_id_fields = ['station']

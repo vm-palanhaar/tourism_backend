@@ -80,8 +80,12 @@ class Shop(TimestampModel):
     is_cash = models.BooleanField(default=False, verbose_name='Cash')
     is_card = models.BooleanField(default=False, verbose_name='Card')
     is_upi = models.BooleanField(default=False, verbose_name='UPI')
+    #Optional
+    is_osop = models.BooleanField(default=False, verbose_name='OSOP Stall')
+    is_baby = models.BooleanField(default=False, verbose_name='Baby Food')
+    is_medical = models.BooleanField(default=False, verbose_name='OTC Medicine')
     def __str__(self):
-        return self.name
+        return f'{self.name}, {self.station.name} ({self.station.code})'
     
 
 def upload_to_shop_license(instance,filename):
@@ -139,6 +143,7 @@ class ShopInv(TimestampModel):
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, verbose_name='Shop')
     product = models.ForeignKey(PcModel.Product, on_delete=models.CASCADE, verbose_name='Product')
     is_stock = models.BooleanField(default=True, verbose_name='Stock')
+    selling_price = models.DecimalField(blank=True, null=True, decimal_places=2,max_digits=5, verbose_name='Selling Price')
 
 
 class IrHelplineNumber(models.Model):

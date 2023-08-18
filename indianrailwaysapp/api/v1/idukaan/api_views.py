@@ -241,9 +241,6 @@ class OrgShopEmpAPi(viewsets.ViewSet, PermissionRequiredMixin):
                 elif orgShopEmp['shop'] == None and orgShopEmp['isMng'] == True:
                     response_data.update(IrError.irOrgShopNotFound())
                     return response_400(response_data)
-                elif orgShopEmp['shop'] == None and orgShopEmp['isMng'] == False:
-                    response_data.update(IrError.irOrgShopEmpSelfNotFound())
-                    return response_400(response_data)
             response_data.update(IrError.irOrgShopEmpSelfNotFound())
             return response_400(response_data)
         response_data.update(UtilError.badActionUser(request, 'IrOrgShopEmpApiCreate_ShopId_Url-{0}_HB-{1}'.format(kwargs['shopId'],request.data['shop'])))
@@ -453,41 +450,50 @@ class ShopInvApi(viewsets.ViewSet, PermissionRequiredMixin):
         response_data['shopId'] = kwargs['shopId']
         if kwargs['shopId'] == str(request.data['shop']):
             orgShopEmp = validateOrgShopEmpMap_Shop_IsMng(request.user, kwargs['shopId'], kwargs['orgId'])
-            if orgShopEmp != None and orgShopEmp['shop'] != None:
-                if orgShopEmp['isMng'] == True:
-                    try:
-                        inv = ShopModel.ShopInv.objects.get(shop=request.data['shop'], product=request.data['product'])
-                        if inv.is_stock:
-                            response_data.update(IrError.irShopInvProdIsFound())
-                            return response_409(response_data)
-                        response_data.update(IrError.irShopInvProdOsFound())
-                        return response_409(response_data)
-                    except ShopModel.ShopInv.DoesNotExist:
+            if orgShopEmp != None:
+                if orgShopEmp['shop'] != None and orgShopEmp['shop'].is_active == True and orgShopEmp['shop'].is_verified == True:
+                    if orgShopEmp['isMng'] == True:
                         try:
-                            prod = PcModel.Product.objects.get(id=request.data['product'])
-                        except PcModel.Product.DoesNotExist:
-                            response_data.update(product_not_found)
+                            inv = ShopModel.ShopInv.objects.get(shop=request.data['shop'], product=request.data['product'])
+                            if inv.is_stock:
+                                response_data.update(IrError.irShopInvProdIsFound())
+                                return response_409(response_data)
+                            response_data.update(IrError.irShopInvProdOsFound())
+                            return response_409(response_data)
+                        except ShopModel.ShopInv.DoesNotExist:
+                            try:
+                                prod = PcModel.Product.objects.get(id=request.data['product'])
+                            except PcModel.Product.DoesNotExist:
+                                response_data.update(product_not_found)
+                                return response_400(response_data)
+                            serializer = ShopSerializer.AddShopInv_iDukaan(data=request.data)
+                            if serializer.is_valid():
+                                serializer.save()
+                                response_data['invProd'] = serializer.data
+                                if prod.brand.is_show:
+                                    response_data['message'] = '{0} {1} is now available at {2}'.format(prod.brand.name, prod.name, orgShopEmp['shop'].name)
+                                else:
+                                    response_data['message'] = '{0} is now available at {1}'.format( prod.name, orgShopEmp['shop'].name)
+                                return Response(response_data, status=status.HTTP_201_CREATED)
+                            response_data.update(UtilError.bodyEmptyFields())
                             return response_400(response_data)
-                        serializer = ShopSerializer.AddShopInv_iDukaan(data=request.data)
-                        if serializer.is_valid():
-                            serializer.save()
-                            response_data['invProd'] = serializer.data
-                            if prod.brand.is_show:
-                                response_data['message'] = '{0} {1} is now available at {2}'.format(prod.brand.name, prod.name, orgShopEmp['shop'].name)
-                            else:
-                                response_data['message'] = '{0} is now available at {1}'.format( prod.name, orgShopEmp['shop'].name)
-                            return Response(response_data, status=status.HTTP_201_CREATED)
-                        response_data.update(UtilError.bodyEmptyFields())
+                    elif orgShopEmp['isMng'] == False:
+                        response_data.update(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
                         return response_400(response_data)
-                elif orgShopEmp['isMng'] == False:
-                    response_data.update(IrError.irOrgShopEmpNotMng(orgShopEmp['shop'].name))
+                elif orgShopEmp['shop'] != None and orgShopEmp['shop'].is_active == True and orgShopEmp['shop'].is_verified == False:
+                    response_data.update(IrError.irOrgShopNotVerified(orgShopEmp['shop'].name))
                     return response_400(response_data)
-            elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == True:
-                response_data.update(IrError.irOrgShopNotFound())
-                return response_400(response_data)
-            elif orgShopEmp != None and orgShopEmp['shop'] == None and orgShopEmp['isMng'] == False:
-                response_data.update(IrError.irOrgShopEmpSelfNotFound())
-                return response_400(response_data)
+                elif orgShopEmp['shop'] != None and orgShopEmp['shop'].is_active == False and orgShopEmp['shop'].is_verified == True:
+                    response_data.update(IrError.irOrgShopInActive(orgShopEmp['shop'].name))
+                    return response_400(response_data)
+                elif orgShopEmp['shop'] != None and orgShopEmp['shop'].is_active == False and orgShopEmp['shop'].is_verified == False:
+                    response_data.update(IrError.irOrgShopInActiveNotVerified(orgShopEmp['shop'].name))
+                    return response_400(response_data)
+                elif orgShopEmp['shop'] == None and orgShopEmp['isMng'] == True:
+                    response_data.update(IrError.irOrgShopNotFound())
+                    return response_400(response_data)
+            response_data.update(IrError.irOrgShopEmpSelfNotFound())
+            return response_400(response_data)
         response_data.update(UtilError.badActionUser(request, 'IrShopInvApiCreate_ShopId_Url-{0}_HB-{1}'.format(kwargs['shopId'],request.data['shop']))) 
         return response_401(response_data)
 

@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from datetime import date
 
 from indianrailwaysapp import models
 from userapp import models as UserModel
@@ -80,7 +81,7 @@ class ShopList_Yatrigan(serializers.ModelSerializer):
     id = serializers.CharField()
     class Meta:
         model = models.Shop
-        fields = ['id','name','image','platform_a','platform_b']
+        fields = ['id','name','image','platform_a','platform_b','is_baby','is_medical']
 
 
 class ShopInfo_Yatrigan(serializers.ModelSerializer):
@@ -107,6 +108,8 @@ class AddShop_iDukaan(serializers.ModelSerializer):
     is_cash = serializers.BooleanField(write_only=True)
     is_card = serializers.BooleanField(write_only=True)
     is_upi = serializers.BooleanField(write_only=True)
+    is_baby = serializers.BooleanField(write_only=True)
+    is_medical = serializers.BooleanField(write_only=True)
     org = serializers.CharField(required=True, write_only=True)
     lic_number = serializers.CharField(required=True, write_only=True)
     lic_doc = serializers.FileField(required=True, write_only=True)
@@ -117,6 +120,8 @@ class AddShop_iDukaan(serializers.ModelSerializer):
         exclude = ['created_at','updated_at','is_open','is_active']
 
     def create(self, validated_data):
+        today_date = date.today()
+        is_active = today_date < validated_data['lic_end_date']
         shop = models.Shop.objects.create(
             name = validated_data['name'],
             image = validated_data['image'],
@@ -130,12 +135,16 @@ class AddShop_iDukaan(serializers.ModelSerializer):
             platform_a = validated_data['platform_a'],
             platform_b = validated_data['platform_b'],
             is_open = False,
-            is_active = False,
+            is_active = is_active,
             is_verified = False,
             #payments
             is_cash = validated_data['is_cash'],
             is_card = validated_data['is_card'],
-            is_upi = validated_data['is_upi']
+            is_upi = validated_data['is_upi'],
+            #option
+            is_osop = validated_data['is_osop'],
+            is_baby = validated_data['is_baby'],
+            is_medical = validated_data['is_medical']
         )
 
         shopLic = models.ShopLic.objects.create(
@@ -172,14 +181,14 @@ class ShopList_iDukaan(serializers.ModelSerializer):
     id = serializers.CharField()
     class Meta:
         model = models.Shop
-        fields = ['id','name','image','station','platform_a','platform_b','is_open','is_active','is_verified']
+        fields = ['id','name','image','station','platform_a','platform_b','is_open','is_active','is_verified','is_baby','is_medical']
 
 
 class OrgShopList_iDukaan(serializers.ModelSerializer):
     id = serializers.CharField()
     class Meta:
         model = models.Shop
-        fields = ['id','name','image','station','platform_a','platform_b','is_open', 'is_active','is_verified']
+        fields = ['id','name','image','station','platform_a','platform_b','is_open', 'is_active','is_verified','is_baby','is_medical']
 
 
 class UpdateShop_iDukaan(serializers.ModelSerializer):
@@ -278,7 +287,7 @@ class AddShopInv_iDukaan(serializers.ModelSerializer):
 class PatchShopInv_iDukaan(serializers.ModelSerializer):
     class Meta:
         model = models.ShopInv
-        fields = ['id','is_stock']
+        fields = ['id','is_stock','selling_price']
 
 
 class AddShopGst_iDukaan(serializers.ModelSerializer):
