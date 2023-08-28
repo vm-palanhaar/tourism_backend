@@ -462,8 +462,8 @@ class ShopInvApi(viewsets.ViewSet, PermissionRequiredMixin):
                             return response_409(response_data)
                         except ShopModel.ShopInv.DoesNotExist:
                             try:
-                                prod = PcModel.Product.objects.get(id=request.data['product'])
-                            except PcModel.Product.DoesNotExist:
+                                prod = PcModel.Prod.objects.get(id=request.data['product'])
+                            except PcModel.Prod.DoesNotExist:
                                 response_data.update(product_not_found)
                                 return response_400(response_data)
                             serializer = ShopSerializer.AddShopInv_iDukaan(data=request.data)

@@ -19,41 +19,102 @@ iDukaan APIs Serializer
 class ProductSerializer(serializers.ModelSerializer):
     id = serializers.CharField()
     brand = serializers.CharField()
-    category = serializers.CharField()
+    cat = serializers.CharField()
     images = serializers.SerializerMethodField()
     class Meta:
-        model = models.Product
-        fields = ('id','brand','name','image','images','description','price','category','weight')
+        model = models.Prod
+        fields = ('id','brand','name','image','images','desc','price','cat','weight')
 
     def get_images(self, instance):
-        images = ProductImageSerializer(models.ProductImage.objects.filter(product=instance), many=True).data
+        images = ProductImageSerializer(models.ProdImg.objects.filter(prod=instance), many=True).data
         return images
 
+class AddOrgSerializer_iDukaan(serializers.ModelSerializer):
+    class Meta:
+        model = models.Org
+        fields = ('name','address')
 
-class AddBrandSerializer(serializers.ModelSerializer):
-    confirm = serializers.BooleanField(required=False, read_only=True)
+    def create(self, validated_data):
+        return super().create(validated_data)
+
+
+class OrgListSerializer_iDukaan(serializers.ModelSerializer):
+    id = serializers.CharField()
+    class Meta:
+        model = models.Org
+        fields = ('id','name')
+
+class AddBrandSerializer_iDukaan(serializers.ModelSerializer):
+    confirm = serializers.BooleanField(required=True)
+    org_id = serializers.CharField(required=True,  allow_null=True)
     class Meta:
         model = models.Brand
-        fields = ('name','image','confirm')
+        fields = ('name','image','confirm','org_id')
+
+    def create(self, validated_data):
+        brand = models.Brand.objects.create(
+            name = validated_data['name'],
+            image = validated_data['image'],
+            is_active = False,
+            is_show = False,
+        )
+        brand.save()
+        orgs_id = self.context.get('orgs_id')
+        orgs_id = orgs_id.replace("[","").replace("]","").replace("\"","").replace("\'","").split(",")
+        for org_id in orgs_id:
+            org = models.Org.objects.get(id = org_id)
+            org_brand = models.OrgBrand.objects.create(
+                org = org,
+                brand = brand
+            )
+            org_brand.save()
+        return brand
 
 
-class BrandListSerializer(serializers.ModelSerializer):
+class BrandListSerializer_iDukaan(serializers.ModelSerializer):
     id = serializers.CharField()
     class Meta:
         model = models.Brand
         exclude = ['created_at','updated_at','is_show',]
 
-
-class ProductCategoryListSerializer(serializers.ModelSerializer):
+class ProductSubCatListSerializer(serializers.ModelSerializer):
+    id = serializers.CharField()
     class Meta:
-        model = models.ProductCategory
-        fields = '__all__'
+        model = models.ProdSubCat
+        exclude = ['cat','desc']
+
+class ProductMacroCatListSerializer(serializers.ModelSerializer):
+    id = serializers.CharField()
+    class Meta:
+        model = models.ProdMacroCat
+        exclude = ['cat','sub_cat','desc']
+
+class ProductCatListSerializer(serializers.ModelSerializer):
+    id = serializers.CharField()
+    sub_cat = serializers.SerializerMethodField()
+    class Meta:
+        model = models.ProdCat
+        fields = ['id','name','sub_cat']
+
+    def get_sub_cat(self, obj):
+        response_data = []
+        sub_cats = models.ProdSubCat.objects.filter(cat = obj)
+        for sub_cat in sub_cats:
+            macro_cats = models.ProdMacroCat.objects.filter(sub_cat = sub_cat, cat = obj)
+            serializer_macro_cats = ProductMacroCatListSerializer(macro_cats, many = True)
+            serializer_sub_cat = ProductSubCatListSerializer(sub_cat)
+            response_map = serializer_sub_cat.data
+            if serializer_macro_cats.data != None:
+                response_map['macro_cat'] = serializer_macro_cats.data
+            response_data.append(response_map)
+        return response_data
+    
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, read_only=True)
     class Meta:
-        model = models.ProductImage
+        model = models.ProdImg
         fields = ('id','image',)
 
 
@@ -62,8 +123,8 @@ class AddProductSerializer(serializers.ModelSerializer):
     confirm = serializers.BooleanField(required=False, read_only=True)
     images = ProductImageSerializer(required=False, allow_null=True, many=True)
     class Meta:
-        model = models.Product
-        fields = ('id','brand','name','image','description','price','category','images','confirm','weight')
+        model = models.Prod
+        fields = ('id','brand','name','image','desc','price','cat','images','confirm','weight')
 
     def create(self, validated_data):
         try:
@@ -71,19 +132,19 @@ class AddProductSerializer(serializers.ModelSerializer):
         except KeyError:
             return super().create(validated_data)
 
-        product = models.Product.objects.create(**validated_data)
+        product = models.Prod.objects.create(**validated_data)
         for image in images:
-            models.ProductImage.objects.create(product=product,image=image)
+            models.ProdImg.objects.create(product=product,image=image)
         return product
     
 
 class ProductListSerializer(serializers.ModelSerializer):
     id = serializers.CharField()
-    category = serializers.CharField()
+    cat = serializers.CharField()
     brand = serializers.SerializerMethodField()
     class Meta:
-        model = models.Product
-        fields = ('id','brand','name','image','price','category','is_active','weight')
+        model = models.Prod
+        fields = ('id','brand','name','image','price','cat','is_active','weight')
 
     def get_brand(self, instance):
         if instance.brand.is_show == False:
@@ -96,22 +157,22 @@ class PatchProductSerializer(serializers.ModelSerializer):
     price = serializers.CharField(required=False)
     description = serializers.CharField(required=False)
     class Meta:
-        model = models.Product
+        model = models.Prod
         fields = ('id','image','price','description','weight')
 
 
-class ProductSubGroupListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.ProductSubGroup
-        fields = ['name','id']
+# class ProductSubGroupListSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = models.ProductSubGroup
+#         fields = ['name','id']
 
 
-class ProductGroupListSerializer(serializers.ModelSerializer):
-    subgroups = serializers.SerializerMethodField()
-    class Meta:
-        model = models.ProductGroup
-        fields = ['name','subgroups']
+# class ProductGroupListSerializer(serializers.ModelSerializer):
+#     subgroups = serializers.SerializerMethodField()
+#     class Meta:
+#         model = models.ProductGroup
+#         fields = ['name','subgroups']
 
-    def get_subgroups(self, instance):
-        subgroups = models.ProductSubGroup.objects.filter(group=instance)
-        return ProductSubGroupListSerializer(subgroups, many=True).data
+#     def get_subgroups(self, instance):
+#         subgroups = models.ProductSubGroup.objects.filter(group=instance)
+#         return ProductSubGroupListSerializer(subgroups, many=True).data

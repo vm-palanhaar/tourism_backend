@@ -26,8 +26,8 @@ class ProductAPIView(generics.RetrieveAPIView):
         response_data = {}
         response_data['id'] = kwargs['productId']
         try:
-            product = PCModel.Product.objects.get(id=kwargs['productId'])
-        except PCModel.Product.DoesNotExist:
+            product = PCModel.Prod.objects.get(id=kwargs['productId'])
+        except PCModel.Prod.DoesNotExist:
             response_data.update(PcError.pcProdNotFound())
             return response_400(response_data)
         
