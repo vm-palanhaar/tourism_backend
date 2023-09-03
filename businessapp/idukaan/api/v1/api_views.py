@@ -9,7 +9,7 @@ from businessapp import models as OrgModel
 from userapp import models as UserModel
 from businessapp import serializers as OrgSerializer
 
-from businessapp.api import errors as OrgError
+from businessapp.idukaan.api import errors as OrgError
 from userapp.api import errors as UserError
 from apiutil import errors as UtilError
 
