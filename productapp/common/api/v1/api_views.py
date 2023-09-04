@@ -4,11 +4,11 @@ from rest_framework import status
 
 from productapp import models as PCModel
 from productapp import serializers as PCSerializer
-from productapp.api.v1 import errors as PcError
+from productapp.common.api import errors as PcError
 
 '''
 PROD
-1. ProductDetailsApi
+1. ProdInfoApi
 DEV
 '''
 
@@ -18,9 +18,8 @@ def response_200(response_fail):
 def response_400(response_fail):
     return Response(response_fail, status=status.HTTP_400_BAD_REQUEST)
 
-product_not_found = 'Product not found!'
 
-class ProductAPIView(generics.RetrieveAPIView):
+class ProdInfoApi(generics.RetrieveAPIView):
 
     def get(self, request, *args, **kwargs):
         response_data = {}

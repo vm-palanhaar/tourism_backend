@@ -14,29 +14,18 @@ from productapp.api.v1 import errors as PcError
 from apiutil import errors as UtilError
 
 
-'''
-PROD
-1. AddBrandAPIView
-2. BrandListSearchAPIView
-3. BrandListAPIView
-4. ProductCategoryListAPIView
-5. AddProductAPIView
-6. ProductListAPIView
-7. ProductAPIViewset
-DEV
-'''
+def response_200(response_data):
+    return Response(response_data, status=status.HTTP_200_OK)
 
-def response_200(response_fail):
-    return Response(response_fail, status=status.HTTP_200_OK)
+def response_400(response_data):
+    return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
-def response_400(response_fail):
-    return Response(response_fail, status=status.HTTP_400_BAD_REQUEST)
+def response_401(response_data):
+    return Response(response_data, status=status.HTTP_401_UNAUTHORIZED)
 
-def response_401(response_fail):
-    return Response(response_fail, status=status.HTTP_401_UNAUTHORIZED)
+def response_409(response_data):
+    return Response(response_data, status=status.HTTP_409_CONFLICT)
 
-def response_409(response_fail):
-    return Response(response_fail, status=status.HTTP_409_CONFLICT)
 
 class OrgApi(viewsets.ViewSet, PermissionRequiredMixin):
     permission_classes = [IsAuthenticated, UserPerm.IsVerified]
@@ -57,7 +46,7 @@ class OrgApi(viewsets.ViewSet, PermissionRequiredMixin):
         serializer = PCSerializer.OrgListSerializer_iDukaan(orgs, many=True)
         response_data['orgList'] = serializer.data
         return response_200(response_data)
-    
+
 
 class BrandApi(viewsets.ViewSet, PermissionRequiredMixin):
     permission_classes = [IsAuthenticated, UserPerm.IsVerified]
@@ -241,23 +230,3 @@ class BrandProdApi(viewsets.ViewSet, PermissionRequiredMixin):
         product.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)'''
 
-
-# class BrandProdGroupApi(generics.ListAPIView):
-#     serializer_class = PCSerializer.ProductGroupListSerializer
-
-#     def get(self, request, *args, **kwargs):
-#         response_data = {}
-#         response_data['brandId'] = kwargs['brandId']
-#         try:
-#             brand = PCModel.Brand.objects.get(id=kwargs['brandId'])
-#         except PCModel.Brand.DoesNotExist:
-#             response_data.update(PcError.pcBrandNotFound())
-#             return response_400(response_data)
-        
-#         groups = PCModel.ProductGroup.objects.filter(brand=brand)
-#         serializer = self.get_serializer(groups, many=True)
-#         response_data.update({
-#                 "brandName" : brand.name,
-#                 "groupList" : serializer.data,
-#             })
-#         return Response(response_data)
