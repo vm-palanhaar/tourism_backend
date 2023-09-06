@@ -9,7 +9,7 @@ from rest_framework import status, generics, viewsets
 from userapp import permissions as UserPerm
 from productapp import models as PCModel
 from productapp import serializers as PCSerializer
-from productapp.api.v1 import errors as PcError
+from productapp.idukaan.api import errors as PcError
 
 from apiutil import errors as UtilError
 

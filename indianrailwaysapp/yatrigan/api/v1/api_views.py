@@ -72,21 +72,17 @@ class ShopInvListApi(generics.ListAPIView):
             shop = IRModel.Shop.objects.get(station=kwargs['station'],id=kwargs['shopId'], is_active=True, is_verified=True)
         except IRModel.Shop.DoesNotExist:
             station = IRModel.RailStation.objects.get(code = kwargs['station'])
-            response_data = {
-                "shop" : kwargs['shopId'],
-                "station" : kwargs['station'],
-                "error" : IrError.irShopListEmpty(station.name, station.code)
-            }
+            response_data = IrError.irShopListEmpty(station.name, station.code)
+            response_data['station'] = kwargs['station'] 
+            response_data['shop'] = kwargs['shopId']
             return response_400(response_data)
         
         shop_invs = IRModel.ShopInv.objects.filter(shop=shop, is_stock=True)
 
         if shop_invs.count() == 0:
-            response_data = {
-                "shop" : kwargs['shopId'],
-                "station" : kwargs['station'],
-                "error" : IrError.irShopInvListEmpty()
-            }
+            response_data = IrError.irShopInvListEmpty()
+            response_data['station'] = kwargs['station']
+            response_data['shop'] = kwargs['shopId']
             return response_400(response_data)
         
         serializer = self.get_serializer(shop_invs, many=True)
@@ -106,10 +102,7 @@ class ShopInfoApi(generics.RetrieveAPIView):
           shop = IRModel.Shop.objects.get(station=kwargs['station'], id=kwargs['shopId'], is_active=True, is_open=True)
         except IRModel.Shop.DoesNotExist:
             station = IRModel.RailStation.objects.get(code = kwargs['station'])
-            error_map = error_map['message'].format(kwargs['station'])
-            response_data = {
-                'error' : IrError.irShopListEmpty(station.name, station.code)
-            }
+            response_data = IrError.irShopListEmpty(station.name, station.code)
             return response_400(response_data)        
         
         serializer = self.get_serializer(shop)

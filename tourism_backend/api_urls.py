@@ -11,7 +11,7 @@ urlpatterns = [
     path('idukaan/ir/', include('indianrailwaysapp.idukaan.api.api_urls')),
     path('idukaan/pc/', include('productapp.idukaan.api.api_urls')),
     # Yatrigan
-    path('yatirgan/ir/', include('indianrailwaysapp.yatrigan.api.api_urls')),
+    path('yatrigan/ir/', include('indianrailwaysapp.yatrigan.api.api_urls')),
 
     path('mobile/', include('mobileapp.api.api_urls')),
     path('geography/', include('geographyapp.api.api_urls')),
