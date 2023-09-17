@@ -124,7 +124,7 @@ class AddProductSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(required=False, allow_null=True, many=True)
     class Meta:
         model = models.Prod
-        fields = ('id','brand','name','image','desc','price','cat','images','confirm','weight')
+        fields = ('id','brand','name','image','desc','price','cat','sub_cat','macro_cat','images','confirm','net_weight')
 
     def create(self, validated_data):
         try:
@@ -144,7 +144,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     brand = serializers.SerializerMethodField()
     class Meta:
         model = models.Prod
-        fields = ('id','brand','name','image','price','cat','is_active','weight')
+        fields = ('id','brand','name','image','price','cat','is_active','net_weight')
 
     def get_brand(self, instance):
         if instance.brand.is_show == False:

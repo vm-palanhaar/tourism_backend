@@ -84,6 +84,8 @@ class Shop(TimestampModel):
     is_osop = models.BooleanField(default=False, verbose_name='OSOP Stall')
     is_baby = models.BooleanField(default=False, verbose_name='Baby Food')
     is_medical = models.BooleanField(default=False, verbose_name='OTC Medicine')
+    # Alerts
+    message = models.TextField(max_length=150, blank=True, null=True, verbose_name='Message')
     def __str__(self):
         return f'{self.name}, {self.station.name} ({self.station.code})'
     
