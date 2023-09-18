@@ -84,6 +84,8 @@ class Shop(TimestampModel):
     is_osop = models.BooleanField(default=False, verbose_name='OSOP Stall')
     is_baby = models.BooleanField(default=False, verbose_name='Baby Food')
     is_medical = models.BooleanField(default=False, verbose_name='OTC Medicine')
+    # Alerts
+    message = models.TextField(max_length=150, blank=True, null=True, verbose_name='Message')
     def __str__(self):
         return f'{self.name}, {self.station.name} ({self.station.code})'
     
@@ -141,7 +143,7 @@ class OrgShopEmp(TimestampModel):
 
 class ShopInv(TimestampModel):
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, verbose_name='Shop')
-    product = models.ForeignKey(PcModel.Product, on_delete=models.CASCADE, verbose_name='Product')
+    product = models.ForeignKey(PcModel.Prod, on_delete=models.CASCADE, verbose_name='Product')
     is_stock = models.BooleanField(default=True, verbose_name='Stock')
     selling_price = models.DecimalField(blank=True, null=True, decimal_places=2,max_digits=5, verbose_name='Selling Price')
 

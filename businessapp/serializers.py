@@ -3,8 +3,6 @@ from rest_framework import serializers
 from businessapp import models as OrgModel
 from userapp import models as UserModel
 from indianrailwaysapp import models as IRModel
-from indianrailwaysapp import serializers as IRSerializer
-
 
 '''
 iDukaan APIs Serializer

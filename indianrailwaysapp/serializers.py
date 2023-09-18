@@ -181,14 +181,14 @@ class ShopList_iDukaan(serializers.ModelSerializer):
     id = serializers.CharField()
     class Meta:
         model = models.Shop
-        fields = ['id','name','image','station','platform_a','platform_b','is_open','is_active','is_verified','is_baby','is_medical']
+        fields = ['id','name','image','station','platform_a','platform_b','is_open','is_active','is_verified','is_baby','is_medical','message']
 
 
 class OrgShopList_iDukaan(serializers.ModelSerializer):
     id = serializers.CharField()
     class Meta:
         model = models.Shop
-        fields = ['id','name','image','station','platform_a','platform_b','is_open', 'is_active','is_verified','is_baby','is_medical']
+        fields = ['id','name','image','station','platform_a','platform_b','is_open', 'is_active','is_verified','is_baby','is_medical','message']
 
 
 class UpdateShop_iDukaan(serializers.ModelSerializer):
