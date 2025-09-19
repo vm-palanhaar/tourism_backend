@@ -12,7 +12,7 @@ env = environ.Env(
 
 environ.Env.read_env(os.path.join(BASE_DIR,'.env'))
 
-ALLOWED_HOSTS = ['localhost','192.168.29.176']
+ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -143,8 +143,9 @@ DATABASES = {
 
 # Mail
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST = 'smtp.zoho.com'
 EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
 EMAIL_PORT = 587
 EMAIL_HOST_USER_CUSTOMER_SERVICE = env('EMAIL_CUSTOMER_SERVICE_MAIL')
 EMAIL_HOST_PASSWORD_CUSTOMER_SERVICE = env('EMAIL_CUSTOMER_SERVICE_PWD')
