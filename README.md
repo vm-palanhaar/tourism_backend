@@ -47,11 +47,11 @@ Create a `.env` file in the project root directory with the following variables:
 DJANGO_SECRET_KEY=django-secret-key
 DEBUG=True
 # Database credentials
-DB_PGSQL_NAME
-DB_PGSQL_USER
-DB_PGSQL_PWD
-DB_PGSQL_HOST
-DB_PGSQL_PORT
+DB_PGSQL_NAME=database-name
+DB_PGSQL_USER=postgres
+DB_PGSQL_PWD=admin
+DB_PGSQL_HOST=localhost
+DB_PGSQL_PORT=5432
 # Google Cloud Storage
 GOOGLE_CLOUD_STORAGE_BUCKET
 # Customer Service Email
@@ -66,7 +66,7 @@ EMAIL_CUSTOMER_SERVICE_PWD
 Ensure PostgreSQL is installed and running. Create a database with the name specified in `.env`:
 
 ```sql
-CREATE DATABASE indrailsuperapp;
+CREATE DATABASE database-name;
 ```
 
 Then run Django migrations:
